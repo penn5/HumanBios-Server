@@ -6,7 +6,7 @@ app = Sanic(name="HumanBios-Server")
 handler = Handler()
 
 
-@app.route('/api/process_message', methods=['POST', 'GET'])
+@app.route('/api/process_message', methods=['POST'])
 async def data_handler(request):
     data = request.json
     # TODO: ADD SAFETY TOKEN-CHECK
