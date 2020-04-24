@@ -57,8 +57,8 @@ Surely, might be changed at any point during production stage, so before writing
   },
   'response': {
     !  'status': int,
-        !  'service_in': str,
-        !  'service_out': str,
+    !  'service_in': str,
+    !  'service_out': str,
     !  'body': [
              {
                 !  'method': str,
@@ -72,11 +72,11 @@ Surely, might be changed at any point during production stage, so before writing
                 !  'has_file': bool,
                    'file': {
                            'payload': str,
-                },
+                    },
                 *   'service_context': {},
-                *   'cache': {},
              },
              ...
        ],
+    *  'cache': {},
     }
 ```
