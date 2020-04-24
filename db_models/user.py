@@ -15,7 +15,7 @@ class User(object):
     def __eq__(self, other):
         if isinstance(other, User):
             return self.identity == other.identity
-        if isinstance(other, int):
+        if isinstance(other, str):
             return self.identity == other
         return False
 
