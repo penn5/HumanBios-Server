@@ -59,7 +59,7 @@ Surely, might be changed at any point during production stage, so before writing
     !  'status': int,
     !  'service_in': str,
     !  'service_out': str,
-    !  'body': [
+    !  'messages': [
              {
                 !  'method': str,
                 ~  'target': {
