@@ -1,2 +1,2 @@
 from .user_identity import UserIdentity
-from .user import User
+from .context import Context

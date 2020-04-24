@@ -1,4 +1,5 @@
-from server_logic.definitions import UserIdentity, User
+from server_logic.definitions import UserIdentity
+from db_models import User
 import fsm.states as states
 
 DUMMY_DB = {}
@@ -11,9 +12,10 @@ class Handler(object):
         self.__start_state = "StartState"
         self.__states = {}
         self.__register_states(*states.collect())
-        self.__commands = {
-            '/start': "StartState",
-        }
+        # Doesn't do anything for now, probably useless long-term
+        # self.__commands = {
+        #     '/start': "StartState",
+        # }
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class()
@@ -40,7 +42,7 @@ class Handler(object):
         user = DUMMY_DB.get(user_identity.hash())
         if user is None:
             user = User(user_id=user_identity.user_id,
-                        service=user_identity.service,
+                        service=user_identity.service_in,
                         identity=user_identity.hash(),
                         first_name=context.get('first_name'),
                         last_name=context.get('last_name'),
@@ -85,11 +87,11 @@ class Handler(object):
         if issubclass(ret_code, states.OK):
             return
         elif issubclass(ret_code, states.GO_TO_STATE):
-            await self.__forward_to_state(context, user, ret_code)
+            await self.__forward_to_state(context, user, ret_code.next_state)
 
-    async def __forward_to_state(self, context, user, ret_code):
+    async def __forward_to_state(self, context, user, next_state):
         last_state = await self.last_state(user)
-        correct_state, current_state, current_state_name = self.__get_state(ret_code.next_state)
+        correct_state, current_state, current_state_name = self.__get_state(next_state)
         DUMMY_DB[user.identity]['states'].append(current_state_name)
         # Check if history is too long
         if len(DUMMY_DB[user.identity]['states']):
@@ -98,4 +100,4 @@ class Handler(object):
             ret_code = await current_state.entry(context, user)
         else:
             ret_code = await current_state.process(context, user)
-        await self.__handle_ret_code(context, user, ret_code)
+        await self.__handle_ret_code(context, user, ret_code.next_state)

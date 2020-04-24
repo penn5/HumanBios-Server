@@ -8,6 +8,7 @@ class OK:
 
 class GO_TO_STATE:
     status = 2
+    next_state = None
 
     def __init__(self, next_state):
         self.next_state = next_state

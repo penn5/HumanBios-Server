@@ -34,3 +34,22 @@ class Context(Serializable):
             else:
                 obj[key] = item
         return obj
+
+    def validate(self) -> bool:
+        valid = True
+        try:
+            self.check(self.request.service_in, str)
+            self.check(self.request.service_out, str)
+            self.check(self.request.user, dict) and self.check(self.request.user.user_id, dict)
+            # TODO: Finish checks according to schema
+        except KeyError:
+            valid = False
+        return valid
+
+    def set_default(self):
+        # TODO: Set defaults according to schema
+        pass
+
+    @staticmethod
+    def check(item, type_):
+        return item and type(item) == type_
