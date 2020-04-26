@@ -17,3 +17,9 @@ logs/
 
 # PyCharm
 .idea
+
+# Conversation data
+conv_data/
+
+# Rasa
+rasa/model/models/*.tar.gz

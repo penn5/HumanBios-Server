@@ -2,11 +2,13 @@ from server_logic.definitions import Context
 from sanic.response import json, text
 from fsm.handler import Handler
 from sanic import Sanic
-import settings
+#import googlemaps 
 import aiohttp
+import ujson
 
 app = Sanic(name="HumanBios-Server")
 handler = Handler()
+#gclient = googlemaps.Client(key=LOAD_KEY)
 
 
 @app.route('/api/process_message', methods=['POST'])
@@ -30,24 +32,32 @@ async def data_handler(request):
     return json(ctx.to_dict())
 
 
-@app.route('/webhooks/botsociety/webhook', methods=['GET'])
-async def botsociety_webhook(request):
-    conversations_ids = request.args['conversation_id']
-    #user_id = request.args['user_id']
-    async with aiohttp.ClientSession() as session:
-        # Both conv and user ids are lists, so relaying that they are the same length
-        #for index, each_id in enumerate(conversations_ids):
-        for each_id in enumerate(conversations_ids):
-            url_ = f"{settings.B_URL}/{settings.B_VERSION}/conversations/{each_id}"
-            headers = {
-                'user_id': settings.B_ID,  # user_id[index],
-                'api_key_public': settings.B_KEY,
-                'Content-Type': 'application/json'
-            }
-            async with session.get(url_, headers=headers) as response:
-                # WORK IN PROGRESS !!! DONT LOOK :P
-                print(await response.json())
-    return text('ok')
+@app.route('/webhooks/rasa/webhook/get_facility', methods=['POST'])
+async def rasa_get_facility(request):
+    # @Important: rasa sends location and facility type
+    # @Important: we search in database -> Found: return relevant facility address.
+    # @Important:                       -> Not Found: request facility from google places ->
+    # @Important: -> save to database, respond with facility address
+    # TODO: Introduce database.
+    # TODO: Introduce google places api
+    data = request.json
+    data = ujson.loads(data)
+    location: str = data.get('location')
+    facility_type: str = data.get('facility_type')
+    facility_id: str = data.get('facility_id')
+    amount: int = data.get('amount')
+    # Facility type is one of the values
+    if facility_id:
+        address = "<this is a dummy server response of the cached facility>"
+        resp = {"facility_address_0": address}
+    elif amount:
+        resp = {}
+        for i in range(amount):
+            resp[f"facility_address_{i}"] = "<this is a dummy server response address>"
+    else:
+        resp = {"facility_address_0": "<this is a dummy server response address>"}
+    return json(resp)
+   
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, log_config=None)
+    app.run(host='127.0.0.1', port=8282, log_config=None)

@@ -1,0 +1,53 @@
+
+# List of intents to generate nlu.md file
+intents:
+    affirm:
+         - 
+           source:     affirm.csv
+    deny:
+         - 
+           source:     deny.csv
+    thanks:
+         - 
+           source:     thanks.csv
+    greet:
+         - 
+           source:     greet.csv
+    goodbye:
+         - 
+           source:     goodbye.csv
+    inform:
+         - 
+           source:     cities.csv 
+         # source:     inform_full.csv
+           extract_as: location
+         - 
+           source:     facilities.csv
+           extract_as: facility_type
+         - 
+           source:     age.csv
+
+    search_provider:
+         - 
+           source:     search_provider.csv
+         - 
+           source:     search_provider_1.csv
+
+    out_of_scope:
+         - 
+           source:     nonsense.csv
+    medical_quiz_trigger:
+         - 
+           source:     medical_quiz_trigger.csv
+
+    is_bot_question:
+         - 
+           source:     is_bot.csv
+    canthelp:
+         - 
+           source:     canthelp.csv
+    handleinsult:
+         - 
+           source:     handleinsult.csv
+misc:
+    - misc.csv
