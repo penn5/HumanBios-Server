@@ -1,9 +1,9 @@
 from jsonschema import Draft7Validator, validators, ValidationError
 
-from . import UserIdentity
 from .serializable import Serializable
-from collections import namedtuple
 from settings import ROOT_PATH, tokens
+from collections import namedtuple
+from . import UserIdentity
 import json
 import os
 
@@ -68,6 +68,13 @@ class Context(Serializable):
         else:
             obj = None
         return ValidationResult(validated, obj)
+
+    def to_dict(self):
+        data = dict()
+        # Send without 'request' key wrapper
+        for key, value in self.__dict__['request'].items():
+            data[key] = value
+        return data
 
     @property
     def ok(self):
