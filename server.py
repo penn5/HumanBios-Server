@@ -1,9 +1,9 @@
 from server_logic.definitions import Context
-from sanic.response import json
+from sanic.response import json, text
 from fsm.handler import Handler
-#from settings import tokens
 from sanic import Sanic
-#import googlemaps
+#import googlemaps 
+import aiohttp
 import ujson
 
 app = Sanic(name="HumanBios-Server")
@@ -18,18 +18,18 @@ async def data_handler(request):
     # TODO: ADD SAFETY TOKEN-CHECK
 
     # build into context
-    result = Context.from_json(data)
+    ctx = Context.from_json(data)
     # verify context `required` attributes
-    if not result.validated:
+    if not ctx.validate():
         # TODO: Add information that will explain what was missing/wrong
         # add custom 403 error code
-        return json({"status": 403})
-    # Validated object
-    ctx = result.object
+        resp = ctx.to_dict()
+        resp['response']['status'] = 403
+        return json(resp)
     # process message
     await handler.process(ctx)
     # return context
-    return json(ctx.ok)
+    return json(ctx.to_dict())
 
 
 @app.route('/webhooks/rasa/webhook/get_facility', methods=['POST'])

@@ -1,44 +1,51 @@
-from server_logic.definitions.context import Context
+from server_logic.definitions.context import Context, ContextItem
 import pytest
 
 
 @pytest.fixture
-def correct_source_and_data():
-    source = {"security_token": "XXX", "via_bot": "UNIQUE_ID", "service_in": "WhatsApp", "service_out": "Facebook", "user": {"user_id": 1232131}, "chat": {"chat_id": 2131321}}
-    data = {'request': {'security_token': 'XXX', 'via_bot': 'UNIQUE_ID', 'service_in': 'WhatsApp', 'service_out': 'Facebook', 'user': {'user_id': 1232131, 'first_name': None, 'last_name': None, 'username': None, 'identity': '779b7c42f27f6378084c46f95bf509acd23456f1'}, 'chat': {'chat_id': 2131321, 'name': None, 'chat_type': None, 'first_name': None, 'username': None}, 'is_forward': False, 'forward': {'user_id': None, 'is_bot': False, 'first_name': None, 'username': None}, 'is_message': False, 'message': {'text': None, 'message_id': None, 'update_id': None}, 'is_file': False, 'is_audio': False, 'is_video': False, 'is_document': False, 'is_image': False, 'is_location': False, 'file': [], 'service_context': {}, 'cache': {}}}
-    return source, data
+def ctx_data():
+    return {'foo': {'nya': 1, 'mew': "mau", 'hello': {"henlo": 'yo', 'hallo': 'de'}}, 'weird': ('flex', 'but okay')}
 
 
-def test_context_from_json_success(correct_source_and_data):
-    source, data = correct_source_and_data
+def test_context_from_json_properties_success(ctx_data):
+    ctx = Context.from_json(ctx_data)
 
-    result = Context.from_json(source)
-
-    assert result.validated is True
-    obj = result.object
-    # Compare representation as strings, because different types
-    assert str(obj) == str(data)
-
-    assert obj['request']['security_token'] == source['security_token']
-    assert obj['request']['service_out'] == source['service_out']
+    assert type(ctx.foo) == ContextItem
+    assert type(ctx.foo.hello) == ContextItem
+    assert ctx.foo.nya == 1
+    assert ctx.foo.hello.hallo == 'de'
+    assert ctx.weird == ('flex', 'but okay')
 
 
-def test_context_from_json_declined(correct_source_and_data):
-    data1 = {"nothing": "lel"}
-    data2 = {"security_token": "XXX", "via_bot": "UNIQUE_ID", "service_in": "WhatsApp", "service_out": "Facebook"}
-    data3 = {"user": {"user_id": 10000000}}
-    # Getting correct source but wrapped into weird type
-    data4 = [correct_source_and_data[0]]
-    data5 = (correct_source_and_data[0], )
+def test_context_from_json_dictionary_access_success(ctx_data):
+    ctx = Context.from_json(ctx_data)
 
-    result1 = Context.from_json(data1)
-    result2 = Context.from_json(data1)
-    result3 = Context.from_json(data1)
-    result4 = Context.from_json(data1)
-    result5 = Context.from_json(data1)
+    assert type(ctx.foo) == ContextItem
+    assert type(ctx.foo.hello) == ContextItem
+    assert ctx['foo']['mew'] == "mau"
+    assert ctx['foo']['hello']['henlo'] == 'yo'
 
-    assert result1.validated is False
-    assert result2.validated is False
-    assert result3.validated is False
-    assert result4.validated is False
-    assert result5.validated is False
+
+def test_context_from_json_elements_access_must_fail(ctx_data):
+    ctx = Context.from_json(ctx_data)
+
+    with pytest.raises(KeyError):
+        ctx['nya']
+    with pytest.raises(KeyError):
+        ctx['foo']['hello']['yo']
+    with pytest.raises(KeyError):
+        ctx['foo']['mau']
+    with pytest.raises(KeyError):
+        ctx['fo']['aaa']
+
+
+def test_context_from_json_tricky_case():
+    ctx_data = {('weird flex', "buy ice"): 'life', lambda a: a * 100: 1}
+
+    ctx = Context.from_json(ctx_data)
+
+    assert ctx[('weird flex', "buy ice")] == 'life'
+    with pytest.raises(KeyError):
+        assert ctx[lambda a: a * 100] == 1
+
+    assert str(ctx) == str(ctx_data)

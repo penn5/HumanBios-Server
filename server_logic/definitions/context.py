@@ -1,73 +1,55 @@
-from jsonschema import Draft7Validator, validators, ValidationError
-
-from . import UserIdentity
 from .serializable import Serializable
-from collections import namedtuple
-from settings import ROOT_PATH
-import json
-import os
 
 
-# Load schema method
-def load(schema_path) -> dict:
-    with open(schema_path) as schema_file:
-        return json.load(schema_file)
+class ContextItem(Serializable):
+    def to_dict(self):
+        data = dict()
+        for key, value in self.__dict__.items():
+            if key in ('db', '_id_attrs'):
+                continue
+            if isinstance(value, ContextItem):
+                data[key] = value.to_dict()
+            else:
+                data[key] = value
+        return data
 
-
-# Method to extend validator behavior -> set defaults
-def extend_with_default(validator_class):
-    validate_properties = validator_class.VALIDATORS["properties"]
-
-    def set_defaults(validator, properties, instance, schema):
-        for property_, sub_schema in properties.items():
-            if "default" in sub_schema:
-                instance.setdefault(property_, sub_schema["default"])
-                if isinstance(property_, dict):
-                    for sub_property_, sub_sub_schema in sub_schema["properties"]:
-                        instance[property_][sub_property_] = sub_sub_schema["default"]
-
-        for error in validate_properties(
-            validator, properties, instance, schema,
-        ):
-            yield error
-
-    context_checker = Draft7Validator.TYPE_CHECKER.redefine("Context", lambda _, inst: isinstance(inst, Context))
-
-    return validators.extend(
-        validator_class, {"properties": set_defaults}, type_checker=context_checker
-    )
-
-
-# The schema from file
-SCHEMA = load(os.path.join(ROOT_PATH, 'server_logic', 'schema.json'))
-# Validator with defaults
-DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
-Validator = DefaultValidatingDraft7Validator(schema=SCHEMA)
-ValidationResult = namedtuple("ValidationResult", ["validated", "object"])
+    @classmethod
+    def from_dict(cls, values):
+        obj = cls()
+        for key, value in values.items():
+            if isinstance(value, dict):
+                obj[key] = cls.from_dict(value)
+            else:
+                obj[key] = value
+        return obj
 
 
 class Context(Serializable):
     @classmethod
     def from_json(cls, json_ish):
-        validated = True
-        try:
-            # TODO: Disallow unfeatured properties?
-            Validator.validate(json_ish)
-        except ValidationError:
-            validated = False
-        if validated:
-            obj = cls()
-            # Set request value
-            obj['request'] = json_ish
-            # By default create user identity
-            obj['request']['user']['identity'] = UserIdentity.hash(
-                                                 obj['request']['user']['user_id'],
-                                                 obj['request']['service_in']
-                                                 )
-        else:
-            obj = None
-        return ValidationResult(validated, obj)
+        obj = cls()
+        for key, item in json_ish.items():
+            if isinstance(item, dict):
+                obj[key] = ContextItem.from_dict(item)
+            else:
+                obj[key] = item
+        return obj
 
-    @property
-    def ok(self):
-        return {"status": 200}
+    def validate(self) -> bool:
+        valid = True
+        try:
+            self.check(self.request.service_in, str)
+            self.check(self.request.service_out, str)
+            self.check(self.request.user, dict) and self.check(self.request.user.user_id, dict)
+            # TODO: Finish checks according to schema
+        except KeyError:
+            valid = False
+        return valid
+
+    def set_default(self):
+        # TODO: Set defaults according to schema
+        pass
+
+    @staticmethod
+    def check(item, type_):
+        return item and type(item) == type_

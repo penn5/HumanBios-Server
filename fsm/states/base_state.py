@@ -31,5 +31,3 @@ class BaseState(object):
     async def process(self, context, user):
         return OK
         #raise NotImplementedError("Please implement event process method")
-
-    # Sugar
