@@ -1,6 +1,14 @@
+from enum import IntEnum
+
+
+class AccountType(IntEnum):
+    COMMON = 1
+    MEDIC = 2
+    SOCIAL = 3
 
 
 class User(object):
+    types = AccountType
 
     def __init__(self, user_id, service, identity, via_bot, first_name=None, last_name=None, username=None):
         self.user_id = int(user_id)
@@ -12,6 +20,8 @@ class User(object):
         self.first_name = first_name
         self.last_name = last_name
         self.username = username
+        self.account_type = None
+        self.language = 'en'
 
     def __eq__(self, other):
         if isinstance(other, User):

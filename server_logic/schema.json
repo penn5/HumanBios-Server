@@ -4,7 +4,6 @@
         "security_token",
         "via_bot",
         "service_in",
-        "service_out",
         "user",
         "chat"
     ],
@@ -19,7 +18,15 @@
             "type": "string"
         },
         "service_out": {
-            "type": "string"
+            "oneOf": [
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+            "default": null
         },
 
         "user": {

@@ -1,3 +1,7 @@
+from settings import tokens, logger
+import aiohttp
+import asyncio
+
 
 class OK:
     status = 1
@@ -22,7 +26,7 @@ class BaseState(object):
 
     # Prepare state
     def __init__(self):
-        pass
+        self.tasks = list()
 
     async def entry(self, context, user):
         return OK
@@ -31,5 +35,17 @@ class BaseState(object):
     async def process(self, context, user):
         return OK
         #raise NotImplementedError("Please implement event process method")
+
+    async def send(self, service_out, user, context, url=None, headers=None):
+        # There must be connection between users, bots and urls
+        # e.g -> different tg bots, but user is mapped to his tg bot
+        if url is None:
+            url = tokens[service_out].values()[0]
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=context.to_dict()) as resp:
+                if not resp.status == 200:
+                    logger.error(await resp.text())
+                return resp
 
     # Sugar

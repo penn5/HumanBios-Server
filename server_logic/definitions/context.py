@@ -3,7 +3,7 @@ from jsonschema import Draft7Validator, validators, ValidationError
 from . import UserIdentity
 from .serializable import Serializable
 from collections import namedtuple
-from settings import ROOT_PATH
+from settings import ROOT_PATH, tokens
 import json
 import os
 
@@ -53,7 +53,7 @@ class Context(Serializable):
         try:
             # TODO: Disallow unfeatured properties?
             Validator.validate(json_ish)
-        except ValidationError:
+        except ValidationError as e:
             validated = False
         if validated:
             obj = cls()
@@ -64,6 +64,7 @@ class Context(Serializable):
                                                  obj['request']['user']['user_id'],
                                                  obj['request']['service_in']
                                                  )
+            obj['request']['security_token'] = tokens['server']
         else:
             obj = None
         return ValidationResult(validated, obj)

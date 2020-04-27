@@ -1,10 +1,13 @@
 from server_logic.definitions import Context
+from settings import ROOT_PATH, logger
 from sanic.response import json
 from fsm.handler import Handler
-#from settings import tokens
 from sanic import Sanic
 #import googlemaps
+import logging
 import ujson
+import os
+
 
 app = Sanic(name="HumanBios-Server")
 handler = Handler()

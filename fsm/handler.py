@@ -1,4 +1,4 @@
-from db_models import User
+from db_models import User, ServiceTypes
 import fsm.states as states
 
 DUMMY_DB = {}
@@ -61,7 +61,7 @@ class Handler(object):
         # Ddos protection triggered
         if user is None:
             return
-        last_state = await self.last_state(user)
+        last_state = await self.last_state(user, context)
         correct_state, current_state, current_state_name = self.__get_state(last_state)
         if not correct_state:
             DUMMY_DB[user.identity]['states'].append(current_state_name)
@@ -70,7 +70,14 @@ class Handler(object):
         await self.__handle_ret_code(context, user, ret_code)
 
     # get last state of the user
-    async def last_state(self, user):
+    async def last_state(self, user, context):
+        # special cases #
+        # TELEGRAM SPECIAL CASES
+        if context['request']['service_in'] == ServiceTypes.TELEGRAM:
+            text = context['request']['message']['text']
+            if text and text.startswith("/start"):
+                context['request']['message']['text'] = text.strip("/start").strip()
+                return self.__start_state
         # defaults to __start_state
         try:
             return DUMMY_DB[user.identity]['states'][-1]
@@ -85,7 +92,7 @@ class Handler(object):
             await self.__forward_to_state(context, user, ret_code.next_state)
 
     async def __forward_to_state(self, context, user, next_state):
-        last_state = await self.last_state(user)
+        last_state = await self.last_state(user, context)
         correct_state, current_state, current_state_name = self.__get_state(next_state)
         DUMMY_DB[user.identity]['states'].append(current_state_name)
         # Check if history is too long

@@ -1,0 +1,6 @@
+[submodule "qa-module"]
+	path = qa-module
+	url = git@github.com:HumanbiOS/QA-module.git
+[submodule "qa_module"]
+	path = qa_module
+	url = git@github.com:HumanbiOS/QA-module.git
