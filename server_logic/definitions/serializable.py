@@ -13,12 +13,6 @@ class Serializable(object):
     def __setitem__(self, key, value):
         self.__dict__[key] = value
 
-    def __getattr__(self, item):
-        return self.__dict__[item]
-
-    def __setattr__(self, key, value):
-        self.__dict__[key] = value
-
     def to_dict(self):
         data = dict()
         for key, value in self.__dict__.items():

@@ -5,6 +5,5 @@ class StartState(base_state.BaseState):
     has_entry = False
 
     async def process(self, context, user):
-        text = context['text']
-        context['text'] = f"Hello, {text.strip('/start ')}!"
+        print(context, user)
         return base_state.OK
