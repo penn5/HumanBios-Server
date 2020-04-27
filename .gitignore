@@ -23,3 +23,6 @@ conv_data/
 
 # Rasa
 rasa/model/models/*.tar.gz
+
+# Local test
+test.py

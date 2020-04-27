@@ -4,6 +4,7 @@ from sanic.response import json
 from fsm.handler import Handler
 from sanic import Sanic
 #import googlemaps
+import asyncio
 import logging
 import ujson
 import os
@@ -30,7 +31,7 @@ async def data_handler(request):
     # Validated object
     ctx = result.object
     # process message
-    await handler.process(ctx)
+    asyncio.create_task(handler.process(ctx))
     # return context
     return json(ctx.ok)
 
