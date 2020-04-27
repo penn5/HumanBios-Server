@@ -1,4 +1,3 @@
-from server_logic.definitions import UserIdentity
 from db_models import User
 import fsm.states as states
 
@@ -12,10 +11,6 @@ class Handler(object):
         self.__start_state = "StartState"
         self.__states = {}
         self.__register_states(*states.collect())
-        # Doesn't do anything for now, probably useless long-term
-        # self.__commands = {
-        #     '/start': "StartState",
-        # }
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class()
@@ -34,20 +29,20 @@ class Handler(object):
         return True, state, name
 
     async def __get_or_register_user(self, context):
-        user_identity = UserIdentity(context['user_id'], context['service'])
         # DDOS protect
-        if await self.__is_ddos(user_identity):
+        if await self.__is_ddos(context['request']['user']['identity']):
             return None
         # Using dummy db for now
-        user = DUMMY_DB.get(user_identity.hash())
+        user = DUMMY_DB.get(context['request']['user']['identity'])
         if user is None:
-            user = User(user_id=user_identity.user_id,
-                        service=user_identity.service_in,
-                        identity=user_identity.hash(),
-                        first_name=context.get('first_name'),
-                        last_name=context.get('last_name'),
-                        username=context.get('username'))
-            DUMMY_DB[user_identity.hash()] = {'user': user, 'states': []}
+            user = User(user_id=context['request']['user']['user_id'],
+                        service=context['request']['user']['service_in'],
+                        identity=context['request']['user']['identity'],
+                        via_bot=context['request']['user']['via_bot'],
+                        first_name=context['request']['user']['first_name'],
+                        last_name=context['request']['user']['last_name'],
+                        username=context['request']['user']['username'])
+            DUMMY_DB[context['request']['user']['identity']] = {'user': user, 'states': []}
         else:
             user = user['user']
         await self.__register_event(user)
