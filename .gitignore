@@ -26,3 +26,5 @@ rasa/model/models/*.tar.gz
 
 # Local test
 test.py
+
+media/

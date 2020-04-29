@@ -1,6 +1,8 @@
-from settings import tokens, logger
+from settings import tokens, logger, ROOT_PATH
+import aiofiles
 import aiohttp
 import asyncio
+import os
 
 
 class OK:
@@ -27,6 +29,11 @@ class BaseState(object):
     # Prepare state
     def __init__(self):
         self.tasks = list()
+        self.media_folder = "media"
+        self.media_path = os.path.join(ROOT_PATH, self.media_folder)
+
+        if not os.path.exists(self.media_path):
+            os.mkdir(self.media_path)
 
     async def entry(self, context, user, db):
         return OK
@@ -36,16 +43,25 @@ class BaseState(object):
         return OK
         #raise NotImplementedError("Please implement event process method")
 
-    async def send(self, service_out, user, context, url=None, headers=None):
-        # There must be connection between users, bots and urls
-        # e.g -> different tg bots, but user is mapped to his tg bot
-        #if url is None:
-        #    url = tokens[service_out].values()[0]
-
+    async def download_by_url(self, url, folder, filename):
+        filepath = os.path.join(self.media_path, folder, filename)
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, data=context.to_dict()) as resp:
-                if not resp.status == 200:
-                    logger.error(await resp.text())
-                return resp
+            async with session.get(url) as response:
+                async for chunk, _ in response.content.iter_chunks():
+                    async with aiofiles.open(filepath, 'wb') as f:
+                        await f.write(chunk)
+        return filepath
+
+    async def file_exists(self, *args):
+        return os.path.exists(os.path.join(self.media_path, *args))
 
     # Sugar
+
+    # TODO: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER VIA HIGH LEVEL METHOD
+    async def send(self):
+        # TODO: maybe add some queue of coroutines and dispatch them all when handler return OK (?)
+        # TODO: or just dispatch them via asyncio.create_task so we will be more efficient (?)
+        # TODO: reasoning:
+        # TODO:         1st way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
+        # TODO:         2nd way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
+        pass

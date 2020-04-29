@@ -10,8 +10,16 @@ class AccountType(IntEnum):
 class User(object):
     types = AccountType
 
-    def __init__(self, user_id, service, identity, via_bot, first_name=None, last_name=None, username=None):
-        self.user_id = int(user_id)
+    def __init__(self,
+                 user_id,
+                 service,
+                 identity,
+                 via_bot,
+                 first_name=None,
+                 last_name=None,
+                 username=None,
+                 language='en'):
+        self.user_id = user_id
         self.service = service
         # Completely unique identifier generated
         # from combination of user_id and service
@@ -21,7 +29,8 @@ class User(object):
         self.last_name = last_name
         self.username = username
         self.account_type = None
-        self.language = 'en'
+        self.language = language
+        self.profile_picture = None
 
     def __eq__(self, other):
         if isinstance(other, User):
