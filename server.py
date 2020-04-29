@@ -20,6 +20,9 @@ handler = Handler()
 async def data_handler(request):
     # get data from request
     data = request.json
+    if data is None:
+        return json({"status": 403, "description": "token unauthorized"})
+
     token = tokens.get(data.get('via_bot'), '')
     # `not token` to avoid `'' == ''`
     if not token or not (data.get("security_token", '') == token.token):
@@ -32,7 +35,7 @@ async def data_handler(request):
     if not result.validated:
         # add custom 403 error code
         # TODO: Describe which fields were unvalidated
-        return json({"status": 403, "description": "unvalidated"})
+        return json({"status": 403, "description": "invalid"})
     # Validated object
     ctx = result.object
     # Replace security token to the server's after validation
