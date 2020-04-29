@@ -30,6 +30,8 @@ async def data_handler(request):
         return json({"status": 403})
     # Validated object
     ctx = result.object
+    # Replace security token to the server's after validation
+    ctx.replace_security_token()
     # process message
     asyncio.create_task(handler.process(ctx))
     # return context

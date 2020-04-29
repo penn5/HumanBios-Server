@@ -64,10 +64,12 @@ class Context(Serializable):
                                                  obj['request']['user']['user_id'],
                                                  obj['request']['service_in']
                                                  )
-            obj['request']['security_token'] = tokens['server']
         else:
             obj = None
         return ValidationResult(validated, obj)
+
+    def replace_security_token(self):
+        self['request']['security_token'] = tokens['server']
 
     def to_dict(self):
         data = dict()

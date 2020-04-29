@@ -114,17 +114,6 @@
                     ],
                     "default": null
                 },
-                "first_name": {
-                    "oneOf": [
-                        {
-                            "type": "null"
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "default": null
-                },
                 "username": {
                     "oneOf": [
                         {

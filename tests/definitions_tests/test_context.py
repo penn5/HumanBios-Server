@@ -5,7 +5,7 @@ import pytest
 @pytest.fixture
 def correct_source_and_data():
     source = {"security_token": "XXX", "via_bot": "UNIQUE_ID", "service_in": "WhatsApp", "user": {"user_id": 1232131}, "chat": {"chat_id": 2131321}}
-    data = {'request': {'security_token': 'XXX', 'via_bot': 'UNIQUE_ID', 'service_in': 'WhatsApp', 'user': {'user_id': 1232131, 'first_name': None, 'last_name': None, 'username': None, 'identity': '779b7c42f27f6378084c46f95bf509acd23456f1'}, 'chat': {'chat_id': 2131321, 'name': None, 'chat_type': None, 'first_name': None, 'username': None}, 'service_out': None, 'is_forward': False, 'forward': {'user_id': None, 'is_bot': False, 'first_name': None, 'username': None}, 'is_message': False, 'message': {'text': None, 'message_id': None, 'update_id': None}, 'is_file': False, 'is_audio': False, 'is_video': False, 'is_document': False, 'is_image': False, 'is_location': False, 'file': [], 'service_context': {}, 'cache': {}}}
+    data = {'request': {'security_token': 'XXX', 'via_bot': 'UNIQUE_ID', 'service_in': 'WhatsApp', 'user': {'user_id': 1232131, 'first_name': None, 'last_name': None, 'username': None, 'identity': '779b7c42f27f6378084c46f95bf509acd23456f1'}, 'chat': {'chat_id': 2131321, 'name': None, 'chat_type': None, 'username': None}, 'service_out': None, 'is_forward': False, 'forward': {'user_id': None, 'is_bot': False, 'first_name': None, 'username': None}, 'is_message': False, 'message': {'text': None, 'message_id': None, 'update_id': None}, 'is_file': False, 'is_audio': False, 'is_video': False, 'is_document': False, 'is_image': False, 'is_location': False, 'file': [], 'service_context': {}, 'cache': {}}}
     return source, data
 
 
