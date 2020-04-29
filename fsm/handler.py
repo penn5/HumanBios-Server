@@ -36,9 +36,9 @@ class Handler(object):
         user = DUMMY_DB.get(context['request']['user']['identity'])
         if user is None:
             user = User(user_id=context['request']['user']['user_id'],
-                        service=context['request']['user']['service_in'],
+                        service=context['request']['service_in'],
                         identity=context['request']['user']['identity'],
-                        via_bot=context['request']['user']['via_bot'],
+                        via_bot=context['request']['via_bot'],
                         first_name=context['request']['user']['first_name'],
                         last_name=context['request']['user']['last_name'],
                         username=context['request']['user']['username'])
@@ -66,7 +66,7 @@ class Handler(object):
         if not correct_state:
             DUMMY_DB[user.identity]['states'].append(current_state_name)
         # Call process method of some state
-        ret_code = await current_state.process(context, user)
+        ret_code = await current_state.process(context, user, DUMMY_DB)
         await self.__handle_ret_code(context, user, ret_code)
 
     # get last state of the user
@@ -86,9 +86,9 @@ class Handler(object):
 
     async def __handle_ret_code(self, context, user, ret_code):
         # Handle return codes
-        if issubclass(ret_code, states.OK):
+        if ret_code == states.OK:
             return
-        elif issubclass(ret_code, states.GO_TO_STATE):
+        elif isinstance(ret_code, states.GO_TO_STATE):
             await self.__forward_to_state(context, user, ret_code.next_state)
 
     async def __forward_to_state(self, context, user, next_state):
@@ -96,10 +96,10 @@ class Handler(object):
         correct_state, current_state, current_state_name = self.__get_state(next_state)
         DUMMY_DB[user.identity]['states'].append(current_state_name)
         # Check if history is too long
-        if len(DUMMY_DB[user.identity]['states']):
+        if len(DUMMY_DB[user.identity]['states']) > self.STATES_HISTORY_LENGTH:
             DUMMY_DB[user.identity]['states'].pop(0)
         if current_state.has_entry:
-            ret_code = await current_state.entry(context, user)
+            ret_code = await current_state.entry(context, user, DUMMY_DB)
         else:
-            ret_code = await current_state.process(context, user)
-        await self.__handle_ret_code(context, user, ret_code.next_state)
+            ret_code = await current_state.process(context, user, DUMMY_DB)
+        await self.__handle_ret_code(context, user, ret_code)

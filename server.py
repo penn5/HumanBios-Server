@@ -2,6 +2,7 @@ from server_logic.definitions import Context
 from settings import ROOT_PATH, logger
 from sanic.response import json
 from fsm.handler import Handler
+from settings import tokens
 from sanic import Sanic
 #import googlemaps
 import asyncio
@@ -19,15 +20,19 @@ handler = Handler()
 async def data_handler(request):
     # get data from request
     data = request.json
-    # TODO: ADD SAFETY TOKEN-CHECK
+    token = tokens.get(data.get('via_bot'), '')
+    # `not token` to avoid `'' == ''`
+    if not token or not (data.get("security_token", '') == token.token):
+        # add custom 403 error code
+        return json({"status": 403, "description": "token unauthorized"})
 
     # build into context
     result = Context.from_json(data)
     # verify context `required` attributes
     if not result.validated:
-        # TODO: Add information that will explain what was missing/wrong
         # add custom 403 error code
-        return json({"status": 403})
+        # TODO: Describe which fields were unvalidated
+        return json({"status": 403, "description": "unvalidated"})
     # Validated object
     ctx = result.object
     # Replace security token to the server's after validation
@@ -42,8 +47,8 @@ async def data_handler(request):
 async def rasa_get_facility(request):
     # @Important: rasa sends location and facility type
     # @Important: we search in database -> Found: return relevant facility address.
-    # @Important:                       -> Not Found: request facility from google places ->
-    # @Important: -> save to database, respond with facility address
+    # @Important:                       -> Not Found: request facility from google places -> \
+    # @Important:                                respond with address <- save to database <- /
     # TODO: Introduce database.
     # TODO: Introduce google places api
     data = request.json

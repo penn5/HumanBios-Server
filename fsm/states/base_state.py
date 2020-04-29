@@ -28,19 +28,19 @@ class BaseState(object):
     def __init__(self):
         self.tasks = list()
 
-    async def entry(self, context, user):
+    async def entry(self, context, user, db):
         return OK
         #raise NotImplementedError("Please implement entry point for the state")
 
-    async def process(self, context, user):
+    async def process(self, context, user, db):
         return OK
         #raise NotImplementedError("Please implement event process method")
 
     async def send(self, service_out, user, context, url=None, headers=None):
         # There must be connection between users, bots and urls
         # e.g -> different tg bots, but user is mapped to his tg bot
-        if url is None:
-            url = tokens[service_out].values()[0]
+        #if url is None:
+        #    url = tokens[service_out].values()[0]
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url, data=context.to_dict()) as resp:
