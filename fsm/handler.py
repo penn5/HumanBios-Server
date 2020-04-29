@@ -30,8 +30,8 @@ class Handler(object):
 
     async def __get_or_register_user(self, context):
         # DDOS protect
-        if await self.__is_ddos(context['request']['user']['identity']):
-            return None
+        #if await self.__is_ddos(context['request']['user']['identity']):
+        #    return None
         # Using dummy db for now
         user = DUMMY_DB.get(context['request']['user']['identity'])
         if user is None:
@@ -48,9 +48,9 @@ class Handler(object):
         await self.__register_event(user)
         return user
 
-    async def __is_ddos(self, user_identity):
-        # TODO: IMPLEMENT DDOS PROTECTION
-        return False
+    #async def __is_ddos(self, user_identity):
+    #    # TODO: IMPLEMENT DDOS PROTECTION
+    #    return False
 
     async def __register_event(self, user):
         # TODO: REGISTER USER ACTIVITY
