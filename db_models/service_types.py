@@ -1,6 +1,5 @@
-from enum import Enum
 
-
-class ServiceTypes(Enum):
+class ServiceTypes:
     TELEGRAM = "telegram"
     FACEBOOK = "facebook"
+    WEBSITE = "website"

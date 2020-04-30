@@ -6,8 +6,6 @@ from settings import tokens
 from sanic import Sanic
 #import googlemaps
 import asyncio
-import logging
-import ujson
 import os
 
 
@@ -21,13 +19,13 @@ async def data_handler(request):
     # get data from request
     data = request.json
     if data is None:
-        return json({"status": 403, "description": "token unauthorized"})
+        return json({"status": 403, "message": "token unauthorized"})
 
     token = tokens.get(data.get('via_bot'), '')
     # `not token` to avoid `'' == ''`
     if not token or not (data.get("security_token", '') == token.token):
         # add custom 403 error code
-        return json({"status": 403, "description": "token unauthorized"})
+        return json({"status": 403, "message": "token unauthorized"})
 
     # build into context
     result = Context.from_json(data)
@@ -35,7 +33,7 @@ async def data_handler(request):
     if not result.validated:
         # add custom 403 error code
         # TODO: Describe which fields were unvalidated
-        return json({"status": 403, "description": "invalid"})
+        return json({"status": 403, "message": "invalid"})
     # Validated object
     ctx = result.object
     # Replace security token to the server's after validation
@@ -55,7 +53,6 @@ async def rasa_get_facility(request):
     # TODO: Introduce database.
     # TODO: Introduce google places api
     data = request.json
-    data = ujson.loads(data)
     location: str = data.get('location')
     facility_type: str = data.get('facility_type')
     facility_id: str = data.get('facility_id')
