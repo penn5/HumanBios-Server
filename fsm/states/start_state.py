@@ -1,3 +1,4 @@
+from db_models import ServiceTypes
 from . import base_state
 
 
@@ -7,11 +8,11 @@ class StartState(base_state.BaseState):
     async def process(self, context, user, db):
         # TODO: LOG IN FOR MEDICS AND SOCIAL WORKERS
 
-        # TODO: ADD `LANGUAGE` TO SCHEMA (NOT-REQUIRED) AND ASSUME USER LANGUAGE WITH THAT
+        # TODO: ADD `LANGUAGE` TO SCHEMA (NON-REQUIRED) AND ASSUME USER LANGUAGE WITH IT,
         # TODO: LATER ASK IF USER WANT TO CONTINUE WITH HIS LANGUAGE OR WANT TO CHANGE
 
         # Download profile pictures
-        if context['service_in'] == 'telegram':
+        if context['service_in'] == ServiceTypes.TELEGRAM:
             # TODO: ADD SEPARATE CHECK IN SCHEMA IF FILE IS URL or BYTES
             if context['request']['is_file'] and context['request']['is_image']:
                 raise NotImplementedError("Downloading files from telegram is not implemented yet")

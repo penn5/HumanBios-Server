@@ -1,5 +1,5 @@
-from . import base_state
 from qa_module import get_next_question
+from . import base_state
 
 
 class QAState(base_state.BaseState):

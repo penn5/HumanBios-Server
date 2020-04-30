@@ -29,9 +29,6 @@ class Handler(object):
         return True, state, name
 
     async def __get_or_register_user(self, context):
-        # DDOS protect
-        #if await self.__is_ddos(context['request']['user']['identity']):
-        #    return None
         # Using dummy db for now
         user = DUMMY_DB.get(context['request']['user']['identity'])
         if user is None:
@@ -42,15 +39,11 @@ class Handler(object):
                         first_name=context['request']['user']['first_name'],
                         last_name=context['request']['user']['last_name'],
                         username=context['request']['user']['username'])
-            DUMMY_DB[context['request']['user']['identity']] = {'user': user, 'states': []}
+            DUMMY_DB[user.identity] = {'user': user, 'states': []}
         else:
             user = user['user']
         await self.__register_event(user)
         return user
-
-    #async def __is_ddos(self, user_identity):
-    #    # TODO: IMPLEMENT DDOS PROTECTION
-    #    return False
 
     async def __register_event(self, user):
         # TODO: REGISTER USER ACTIVITY
@@ -76,7 +69,7 @@ class Handler(object):
         if context['request']['service_in'] == ServiceTypes.TELEGRAM:
             text = context['request']['message']['text']
             if text and text.startswith("/start"):
-                context['request']['message']['text'] = text.strip("/start").strip()
+                context['request']['message']['text'] = text[6:].strip()
                 return self.__start_state
         # defaults to __start_state
         try:
