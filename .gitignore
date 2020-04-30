@@ -28,3 +28,4 @@ rasa/model/models/*.tar.gz
 test.py
 
 media/
+translated_strings/

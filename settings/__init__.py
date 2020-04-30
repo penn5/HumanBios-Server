@@ -1,3 +1,4 @@
+from .settings import CLOUD_TRANSLATION_API_KEY
 from .settings import FACEBOOK_BOT_1_TOKEN
 from .settings import TELEGRAM_SECURITY_TOKEN
 from .settings import SERVER_SECURITY_TOKEN
@@ -17,4 +18,4 @@ tokens = {
     'tests_dummy_bot': Config('TEST_BOT_1111', 'http://dummy_url'),
 }
 
-__all__ = ['tokens', 'ROOT_PATH', 'logger']
+__all__ = ['tokens', 'ROOT_PATH', 'logger', 'CLOUD_TRANSLATION_API_KEY']
