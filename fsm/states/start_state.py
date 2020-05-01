@@ -12,7 +12,7 @@ class StartState(base_state.BaseState):
         # TODO: LATER ASK IF USER WANT TO CONTINUE WITH HIS LANGUAGE OR WANT TO CHANGE
 
         # Download profile pictures
-        if context['service_in'] == ServiceTypes.TELEGRAM:
+        if context['request']['service_in'] == ServiceTypes.TELEGRAM:
             # TODO: ADD SEPARATE CHECK IN SCHEMA IF FILE IS URL or BYTES
             if context['request']['is_file'] and context['request']['is_image']:
                 raise NotImplementedError("Downloading files from telegram is not implemented yet")
@@ -28,4 +28,4 @@ class StartState(base_state.BaseState):
 
                     path = await self.download_by_url(url, f'user_{user.identity}', 'profile.png')
                     user.profile_picture = path
-        return base_state.GO_TO_STATE("QuizState")
+        return base_state.GO_TO_STATE("BasicQuestionState")

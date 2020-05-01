@@ -58,6 +58,10 @@ class Handler(object):
         correct_state, current_state, current_state_name = self.__get_state(last_state)
         if not correct_state:
             DUMMY_DB[user.identity]['states'].append(current_state_name)
+
+        # Prepare language for state
+        current_state.set_language(user.language)
+
         # Call process method of some state
         ret_code = await current_state.process(context, user, DUMMY_DB)
         await self.__handle_ret_code(context, user, ret_code)
@@ -91,6 +95,10 @@ class Handler(object):
         # Check if history is too long
         if len(DUMMY_DB[user.identity]['states']) > self.STATES_HISTORY_LENGTH:
             DUMMY_DB[user.identity]['states'].pop(0)
+
+        # Prepare language for state
+        current_state.set_language(user.language)
+
         if current_state.has_entry:
             ret_code = await current_state.entry(context, user, DUMMY_DB)
         else:

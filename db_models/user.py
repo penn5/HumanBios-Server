@@ -18,7 +18,8 @@ class User(object):
                  first_name=None,
                  last_name=None,
                  username=None,
-                 language='en'):
+                 language='en',
+                 current_state=None):
         self.user_id = user_id
         self.service = service
         # Completely unique identifier generated
@@ -31,6 +32,7 @@ class User(object):
         self.account_type = None
         self.language = language
         self.profile_picture = None
+        self.current_state = current_state
 
     def __eq__(self, other):
         if isinstance(other, User):

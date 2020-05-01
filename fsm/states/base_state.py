@@ -1,4 +1,5 @@
 from settings import tokens, logger, ROOT_PATH
+from strings import strings_text
 import aiofiles
 import aiohttp
 import asyncio
@@ -35,6 +36,18 @@ class BaseState(object):
         if not os.path.exists(self.media_path):
             os.mkdir(self.media_path)
 
+        # @Important: easy way to access all string tokens
+        self.__strings = strings_text
+        self.__language = 'en'
+
+    # Getter method for strings, that gives string prepared in user's language
+    @property
+    def strings(self):
+        return self.__strings[self.__language]
+
+    def set_language(self, value):
+        self.__language = value
+
     async def entry(self, context, user, db):
         return OK
         #raise NotImplementedError("Please implement entry point for the state")
@@ -52,7 +65,7 @@ class BaseState(object):
                         await f.write(chunk)
         return filepath
 
-    async def file_exists(self, *args):
+    def file_exists(self, *args):
         return os.path.exists(os.path.join(self.media_path, *args))
 
     # Sugar
