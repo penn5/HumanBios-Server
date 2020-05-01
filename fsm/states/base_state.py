@@ -56,6 +56,8 @@ class BaseState(object):
         # Commit changes to database
         # user.save(), db.save()
         # etc
+        # @Important: collect all requests
+        _results = await self.collect(user, context)
         return result
 
     async def wrapped_process(self, context, user, db):
@@ -63,6 +65,8 @@ class BaseState(object):
         # Commit changes to database
         # user.save(), db.save()
         # etc
+        # @Important: collect all requests
+        _results = await self.collect(user, context)
         return result
 
     async def entry(self, context, user, db):
@@ -85,6 +89,7 @@ class BaseState(object):
 
     # Sugar
 
+    # @Important: command to actually send all collected requests from `process` or `entry`
     async def collect(self, user: User, context: Context):
         results = list()
         async with ClientSession() as session:
@@ -105,13 +110,13 @@ class BaseState(object):
             logger.info(f"Sending task status: {result}")
             return result
 
-    # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER VIA HIGH LEVEL METHOD
+    # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
         # @Important: maybe add some queue of coroutines and dispatch them all when handler return OK (?)
-        # @Important: or just dispatch them via asyncio.create_task so we will be more efficient (?)
+        # @Important: or just dispatch them via asyncio.create_task so it will be more efficient (?)
         # @Important: reasoning:
-        # @Important:   1st way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
-        # @Important:   2nd way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
+        # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
+        # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
 
         if self.tasks.get(to_user) is None:
             # Using id() to provide completely unique key for the current process method
