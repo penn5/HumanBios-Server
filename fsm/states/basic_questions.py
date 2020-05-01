@@ -5,10 +5,11 @@ class BasicQuestionState(base_state.BaseState):
     async def entry(self, context, user, db):
         if user.current_state is None:
             user.current_state = "choose_lang"
-        ##
+        #
+        #buttons = []
         #if user.current_state == "choose_lang":
         #    text = "Please select the language you want to me to talk in to you from now on."
-        #
+        #    buttons = []
         #    user.current_state = "story"
         #elif user.current_state == "story":
         #    text = self.strings['story']
@@ -17,7 +18,7 @@ class BasicQuestionState(base_state.BaseState):
         #    ...
 
         print(context, user)
-        #await self.send('telegram', context, user)
+        #await self.send(user, context)
         return base_state.OK
 
     async def process(self, context, user, db):

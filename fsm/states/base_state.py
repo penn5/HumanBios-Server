@@ -1,7 +1,10 @@
+from server_logic.definitions import Context, SenderTask
 from settings import tokens, logger, ROOT_PATH
+from aiohttp import ClientSession
 from strings import strings_text
+from db_models import User
+from copy import deepcopy
 import aiofiles
-import aiohttp
 import asyncio
 import os
 
@@ -29,7 +32,7 @@ class BaseState(object):
 
     # Prepare state
     def __init__(self):
-        self.tasks = list()
+        self.tasks = dict()
         self.media_folder = "media"
         self.media_path = os.path.join(ROOT_PATH, self.media_folder)
 
@@ -70,7 +73,7 @@ class BaseState(object):
 
     async def download_by_url(self, url, folder, filename):
         filepath = os.path.join(self.media_path, folder, filename)
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             async with session.get(url) as response:
                 async for chunk, _ in response.content.iter_chunks():
                     async with aiofiles.open(filepath, 'wb') as f:
@@ -82,11 +85,36 @@ class BaseState(object):
 
     # Sugar
 
-    # TODO: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER VIA HIGH LEVEL METHOD
-    async def send(self):
-        # TODO: maybe add some queue of coroutines and dispatch them all when handler return OK (?)
-        # TODO: or just dispatch them via asyncio.create_task so we will be more efficient (?)
-        # TODO: reasoning:
-        # TODO:         1st way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
-        # TODO:         2nd way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
-        pass
+    async def collect(self, user: User, context: Context):
+        results = list()
+        async with ClientSession() as session:
+            # @Important: Since asyncio.gather order is not preserved, we don't want to run them simultaneously
+            # tasks = [self._send(task, session) for task in self.tasks[id(context)]]
+            # group = asyncio.gather(*tasks)
+            # results = await group
+            # return results
+            for each_task in self.tasks[id(context)]:
+                res = await self._send(each_task, session)
+                results.append(res)
+        return results
+
+    async def _send(self, task: SenderTask, session: ClientSession):
+        url = tokens[task.user.via_instance].url
+        async with session.post(url, json=task.context.to_dict()) as resp:
+            result = await resp.json()
+            logger.info(f"Sending task status: {result}")
+            return result
+
+    # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER VIA HIGH LEVEL METHOD
+    def send(self, to_user: User, context: Context):
+        # @Important: maybe add some queue of coroutines and dispatch them all when handler return OK (?)
+        # @Important: or just dispatch them via asyncio.create_task so we will be more efficient (?)
+        # @Important: reasoning:
+        # @Important:   1st way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
+        # @Important:   2nd way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
+
+        if self.tasks.get(to_user) is None:
+            # Using id() to provide completely unique key for the current process method
+            self.tasks[id(context)] = [SenderTask(to_user, deepcopy(context))]
+        else:
+            self.tasks[id(context)].append(SenderTask(to_user, deepcopy(context)))

@@ -14,7 +14,7 @@ class User(object):
                  user_id,
                  service,
                  identity,
-                 via_bot,
+                 via_instance,
                  first_name=None,
                  last_name=None,
                  username=None,
@@ -25,7 +25,7 @@ class User(object):
         # Completely unique identifier generated
         # from combination of user_id and service
         self.identity = identity
-        self.via_bot = via_bot
+        self.via_instance = via_instance
         self.first_name = first_name
         self.last_name = last_name
         self.username = username
