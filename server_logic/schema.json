@@ -127,7 +127,7 @@
                 }
             }
         },
-        "is_forward": {
+        "has_forward": {
             "type": "boolean",
             "default": false
         },
@@ -181,7 +181,7 @@
                 }
             }
         },
-        "is_message": {
+        "has_message": {
             "type": "boolean",
             "default": false
         },
@@ -224,27 +224,27 @@
                 }
             }
         },
-        "is_file": {
+        "has_file": {
             "type": "boolean",
             "default": false
         },
-        "is_audio": {
+        "has_audio": {
             "type": "boolean",
             "default": false
         },
-        "is_video": {
+        "has_video": {
             "type": "boolean",
             "default": false
         },
-        "is_document": {
+        "has_document": {
             "type": "boolean",
             "default": false
         },
-        "is_image": {
+        "has_image": {
             "type": "boolean",
             "default": false
         },
-        "is_location": {
+        "has_location": {
             "type": "boolean",
             "default": false
         },
@@ -275,6 +275,49 @@
                         ]
                     },
                     "thumbnail": {
+                        "oneOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "has_buttons": {
+            "type": "boolean",
+            "default": false
+        },
+        "buttons": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "oneOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "text": {
+                        "oneOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "value": {
                         "oneOf": [
                             {
                                 "type": "null"
