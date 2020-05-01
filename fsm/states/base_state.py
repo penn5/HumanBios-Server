@@ -48,13 +48,25 @@ class BaseState(object):
     def set_language(self, value):
         self.__language = value
 
+    async def wrapped_entry(self, context, user, db):
+        result = await self.entry(context, user, db)
+        # Commit changes to database
+        # user.save(), db.save()
+        # etc
+        return result
+
+    async def wrapped_process(self, context, user, db):
+        result = await self.process(context, user, db)
+        # Commit changes to database
+        # user.save(), db.save()
+        # etc
+        return result
+
     async def entry(self, context, user, db):
         return OK
-        #raise NotImplementedError("Please implement entry point for the state")
 
     async def process(self, context, user, db):
         return OK
-        #raise NotImplementedError("Please implement event process method")
 
     async def download_by_url(self, url, folder, filename):
         filepath = os.path.join(self.media_path, folder, filename)

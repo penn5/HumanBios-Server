@@ -1,4 +1,3 @@
-from strings import strings_text
 from . import base_state
 
 
@@ -6,6 +5,17 @@ class BasicQuestionState(base_state.BaseState):
     async def entry(self, context, user, db):
         if user.current_state is None:
             user.current_state = "choose_lang"
+        ##
+        #if user.current_state == "choose_lang":
+        #    text = "Please select the language you want to me to talk in to you from now on."
+        #
+        #    user.current_state = "story"
+        #elif user.current_state == "story":
+        #    text = self.strings['story']
+        #    user.current_state = "story"
+        #elif user.current_state == "choose_lang":
+        #    ...
+
         print(context, user)
         #await self.send('telegram', context, user)
         return base_state.OK
