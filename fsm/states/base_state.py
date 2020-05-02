@@ -1,5 +1,6 @@
 from server_logic.definitions import Context, SenderTask
 from settings import tokens, logger, ROOT_PATH
+from translation import Translator
 from aiohttp import ClientSession
 from strings import strings_text
 from db_models import User
@@ -43,6 +44,9 @@ class BaseState(object):
         self.__strings = strings_text
         self.__language = 'en'
         self.languages = strings_text.keys()
+
+        # @Important: instantiate translator
+        self.translator = Translator()
 
     # Getter method for strings, that gives string prepared in user's language
     @property
@@ -101,6 +105,13 @@ class BaseState(object):
     # @Important: check if downloaded file exist
     def file_exists(self, *args):
         return os.path.exists(os.path.join(self.media_path, *args))
+
+    # @Important: high level access to translation module
+    # @Important: note, though, that we shouldn't abuse translation api
+    # @Important: because a) it's not good enough, b) it takes time to make
+    # @Important: a call to the google cloud api
+    async def translate(self, target: str, text: str) -> str:
+        return await self.translator.translate_text(target, text)
 
     # Sugar
 

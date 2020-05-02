@@ -10,6 +10,8 @@ class Translator:
         "Content-Type": "application/json",
     }
 
+    # @Thought: Maybe drop __init__ func and move key to the class var
+    # @Thought: then change all methods to @classmethod
     def __init__(self):
         self.key = CLOUD_TRANSLATION_API_KEY
 
