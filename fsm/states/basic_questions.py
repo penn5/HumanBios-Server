@@ -33,11 +33,8 @@ class BasicQuestionState(base_state.BaseState):
         # Raw text alias
         raw_text: str = context['request']['message']['text']
 
-        # @Important: Trigger different state to ask QA
-        if key == "QA_TRIGGER":
-            return base_state.GO_TO_STATE("QAState")
-        elif key == "choose_lang":
-            language = raw_text.strip("lang_")
+        if key == "choose_lang":
+            language = raw_text[5:]
             if language not in self.languages:
                 context['request']['message']['text'] = self.strings["qa_error"]
                 context['request']['buttons'] = self.lang_keyboard()
@@ -73,7 +70,7 @@ class BasicQuestionState(base_state.BaseState):
                 # Record answer to the question
                 db[user.identity]['resume'][key] = context['request']['message']['text']
 
-        # Conversation killers
+        # Conversation killers / Key points
         # Denied disclaimer
         if key == "disclaimer" and raw_text == self.strings['no']:
             context['request']['message']['text'] = self.strings["bye"]
@@ -100,6 +97,10 @@ class BasicQuestionState(base_state.BaseState):
             buttons = []
         else:
             buttons = self.simple_keyboard()
+
+        # @Important: Trigger different state to ask QA
+        if key == "QA_TRIGGER":
+            return base_state.GO_TO_STATE("QAState")
 
         # Set values to the answer
         context['request']['message']['text'] = self.strings[key]
