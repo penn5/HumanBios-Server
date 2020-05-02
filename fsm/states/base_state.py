@@ -80,10 +80,10 @@ class BaseState(object):
             _results = await self.collect(user, context)
         return status
 
-    async def entry(self, context, user, db):
+    async def entry(self, context: Context, user: User, db):
         return OK
 
-    async def process(self, context, user, db):
+    async def process(self, context: Context, user: User, db):
         return OK
 
     # @Important: 1) find better way with database
@@ -134,9 +134,12 @@ class BaseState(object):
     async def _send(self, task: SenderTask, session: ClientSession):
         url = tokens[task.user.via_instance].url
         async with session.post(url, json=task.context.to_dict()) as resp:
-            result = await resp.json()
-            logger.info(f"Sending task status: {result}")
-            return result
+            if resp.status == 200:
+                result = await resp.json()
+                logger.info(f"Sending task status: {result}")
+                return result
+            else:
+                logger.info(f"[ERROR]: Sending task status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):

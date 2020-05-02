@@ -26,7 +26,6 @@ class StartState(base_state.BaseState):
                     # TODO: ADD CHECK IF `is_file` or any of `is_{media}` is checked, BUT no files -> return(403)
                     # Should be only one profile picture
                     url = context['request']['files'][0]['payload']
-
                     path = await self.download_by_url(url, f'user_{user.identity}', 'profile.png')
                     user.profile_picture = path
         return base_state.GO_TO_STATE("BasicQuestionState")
