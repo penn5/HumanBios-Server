@@ -21,7 +21,7 @@ async def data_handler(request):
     if data is None:
         return json({"status": 403, "message": "token unauthorized"})
 
-    token = tokens.get(data.get('via_bot'), '')
+    token = tokens.get(data.get('via_instance'), '')
     # `not token` to avoid `'' == ''`
     if not token or not (data.get("security_token", '') == token.token):
         # add custom 403 error code

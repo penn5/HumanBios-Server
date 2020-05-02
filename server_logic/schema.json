@@ -2,7 +2,7 @@
     "type": "object",
     "required": [
         "security_token",
-        "via_bot",
+        "via_instance",
         "service_in",
         "user",
         "chat"
@@ -11,7 +11,7 @@
         "security_token": {
             "type": "string"
         },
-        "via_bot": {
+        "via_instance": {
             "type": "string"
         },
         "service_in": {
@@ -329,6 +329,10 @@
                     }
                 }
             }
+        },
+        "instance_context": {
+            "type": "object",
+            "default": {}
         },
         "service_context": {
             "type": "object",

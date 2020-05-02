@@ -35,7 +35,7 @@ class Handler(object):
             user = User(user_id=context['request']['user']['user_id'],
                         service=context['request']['service_in'],
                         identity=context['request']['user']['identity'],
-                        via_bot=context['request']['via_bot'],
+                        via_instance=context['request']['via_instance'],
                         first_name=context['request']['user']['first_name'],
                         last_name=context['request']['user']['last_name'],
                         username=context['request']['user']['username'])

@@ -21,4 +21,4 @@ if __name__ == "__main__":
             args.output_file
         )
     )
-    # [EXAMPLE]: python -m translation strings.json en de ru es fr uk all_strings.json
+    # [EXAMPLE]: python -m translation strings/json/strings.json en de ru es fr uk strings/json/all_strings.json
