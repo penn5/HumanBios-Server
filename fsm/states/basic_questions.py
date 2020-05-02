@@ -13,6 +13,11 @@ ORDER = {
 class BasicQuestionState(base_state.BaseState):
     has_entry = False
 
+    # @Thought: Maybe, use `entry` with language and
+    # @Thought: increase state count only after accepting the answer
+    # @Thought: so it's easier to manage states, and easy to implement
+    # @Thought: wrong value fallback. So basically only confirmed value
+    # @Thought: will allow to go through to next state
     async def process(self, context, user, db):
         # @Important: Default starting state
         if user.current_state is None:
