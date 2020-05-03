@@ -14,6 +14,7 @@
 * language: `str`
 * type: `str?` (MEDIC, SOCIAL, PATIENT)
 * created_at: `datetime`
+* last_location: `str` (coordinates)
 
 ## State
 * name: `str`

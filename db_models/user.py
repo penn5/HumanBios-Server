@@ -33,6 +33,7 @@ class User(object):
         self.language = language
         self.profile_picture = None
         self.current_state = current_state
+        self.last_location = None
 
     def __eq__(self, other):
         if isinstance(other, User):
