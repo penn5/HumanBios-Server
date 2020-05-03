@@ -55,7 +55,9 @@ class BasicQuestionState(base_state.BaseState):
                 # Download selfie in the user's folder
                 path = await self.download_by_url(url, f'user_{user.identity}', 'selfie.png')
                 # TODO: Serve files somehow to allow remote access via front ends
-                db[user.identity]['resume'] = path
+                # TODO: @Important: Need to keep private access, so we need static files server
+                # TODO: @Important: that will create tokens and timestamps and allows time limited access
+                db[user.identity]['resume']['selfie_path'] = path
             else:
                 # @Important: bad value fallback
                 if key != "story" and raw_text not in [self.strings['yes'], self.strings['no'], self.strings['back']]:

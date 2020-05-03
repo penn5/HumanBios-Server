@@ -3,6 +3,7 @@ from jsonschema import Draft7Validator, validators, ValidationError
 from .serializable import Serializable
 from settings import ROOT_PATH, tokens
 from collections import namedtuple
+from copy import copy, deepcopy
 from . import UserIdentity
 import json
 import os
@@ -52,6 +53,7 @@ class Context(Serializable):
         validated = True
         try:
             # TODO: Disallow unfeatured properties?
+            # TODO: Or it will be too resource-consuming
             Validator.validate(json_ish)
         except ValidationError as e:
             validated = False
@@ -77,6 +79,12 @@ class Context(Serializable):
         for key, value in self.__dict__['request'].items():
             data[key] = value
         return data
+
+    def copy(self):
+        return copy(self)
+
+    def deepcopy(self):
+        return deepcopy(self)
 
     @property
     def ok(self):

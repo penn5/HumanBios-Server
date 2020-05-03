@@ -158,6 +158,6 @@ class BaseState(object):
             # @Important: 1) Using id() to provide completely unique key for the current `process` method
             # @Important: 2) Making deep copy of the object, because in different calls values will
             # @Important:    most surely be different, so we don't want to just pass old object pointer
-            self.tasks[id(context)] = [SenderTask(to_user, deepcopy(context))]
+            self.tasks[id(context)] = [SenderTask(to_user, context.deepcopy())]
         else:
-            self.tasks[id(context)].append(SenderTask(to_user, deepcopy(context)))
+            self.tasks[id(context)].append(SenderTask(to_user, context.deepcopy()))
