@@ -6,7 +6,9 @@ from . import base_state
 class QAState(base_state.BaseState):
 
     async def entry(self, context, user, db):
+        # Get the first question
         question = get_next_question(user.identity, user.language)
+        # Create qa storage
         db[user.identity]['qa'] = {
             'q': question,
             'qa_results': {}

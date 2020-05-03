@@ -17,17 +17,20 @@ ORDER = {
 class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
-        # @Important: Default starting state
-        user.current_state = 1
-        # @TMP: initiate resume, to record user answers
-        db[user.identity]['resume'] = {}
-        # Send language message
-        context['request']['message']['text'] = self.strings["choose_lang"]
-        context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
-        context['request']['has_buttons'] = True
-        # Don't forget to send message
-        self.send(user, context)
-        return base_state.OK
+        if user.current_state is None:
+            # @Important: Default starting state
+            user.current_state = 1
+            # @TMP: initiate resume, to record user answers
+            db[user.identity]['resume'] = {}
+            # Send language message
+            context['request']['message']['text'] = self.strings["choose_lang"]
+            context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
+            context['request']['has_buttons'] = True
+            # Don't forget to send message
+            self.send(user, context)
+            return base_state.OK
+        else:
+            return await self.process(context, user, db)
 
     async def process(self, context, user: User, db):
         key = ORDER.get(user.current_state)
