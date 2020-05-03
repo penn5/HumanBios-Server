@@ -72,6 +72,8 @@ class BasicQuestionState(base_state.BaseState):
                 db[user.identity]['resume'][key] = context['request']['message']['text']
 
         # Conversation killers / Key points
+        # Bonus value to skip one state
+        bonus_value = 0
         # Denied disclaimer (or end of conv)
         if (key == "disclaimer" or key == "wanna_help") and raw_text == self.strings['no']:
             context['request']['message']['text'] = self.strings["bye"]
@@ -87,10 +89,10 @@ class BasicQuestionState(base_state.BaseState):
             return base_state.OK
         # if not medical -> jump to `stressed` question
         elif key == "medical" and raw_text == self.strings['no']:
-            user.current_state += 1
+            bonus_value = 1
         # if not stressed -> jump to `wanna_help`
         elif key == "stressed" and raw_text == self.strings['no']:
-            user.current_state += 1
+            bonus_value = 1
         # @Important: create doctor request
         elif key == "mental" and raw_text == self.strings['yes']:
             #donotrepeatyourcode
@@ -103,10 +105,11 @@ class BasicQuestionState(base_state.BaseState):
 
         # Back button
         if raw_text == self.strings['back']:
-            user.current_state -= 2
+            user.current_state -= 1
         else:
             # Update current state
-            user.current_state += 1
+            user.current_state += 1 + bonus_value
+
         # Update current key
         key = ORDER.get(user.current_state)
 
