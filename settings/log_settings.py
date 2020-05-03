@@ -13,6 +13,6 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 logfile_handler = logging.FileHandler(logfile, 'a', 'utf-8')
-logfile_handler.setLevel(logging.ERROR)
+logfile_handler.setLevel(logging.INFO)
 logfile_handler.setFormatter(formatter)
 logger.addHandler(logfile_handler)

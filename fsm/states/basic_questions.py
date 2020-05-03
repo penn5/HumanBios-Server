@@ -22,7 +22,7 @@ class BasicQuestionState(base_state.BaseState):
         db[user.identity]['resume'] = {}
         # Send language message
         context['request']['message']['text'] = self.strings["choose_lang"]
-        context['request']['buttons'] = self.lang_keyboard()
+        context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
         context['request']['has_buttons'] = True
         # Don't forget to send message
         self.send(user, context)
@@ -37,7 +37,7 @@ class BasicQuestionState(base_state.BaseState):
             language = raw_text[5:]
             if language not in self.languages:
                 context['request']['message']['text'] = self.strings["qa_error"]
-                context['request']['buttons'] = self.lang_keyboard()
+                context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
                 context['request']['has_buttons'] = True
                 # Don't forget to send message
                 self.send(user, context)
@@ -63,7 +63,7 @@ class BasicQuestionState(base_state.BaseState):
                     self.send(user, context)
                     # Repeat the message
                     context['request']['message']['text'] = self.strings[key]
-                    context['request']['buttons'] = self.simple_keyboard()
+                    context['request']['buttons_type'], context['request']['buttons'] = self.simple_keyboard()
                     context['request']['has_buttons'] = True
                     self.send(user, context)
                     return base_state.OK
@@ -82,6 +82,7 @@ class BasicQuestionState(base_state.BaseState):
             self.send(user, context)
             # Reset the flow
             user.current_state = None
+            db[user.identity]['states'].clear()
             return base_state.OK
 
         # Back button
@@ -94,9 +95,9 @@ class BasicQuestionState(base_state.BaseState):
         key = ORDER.get(user.current_state)
 
         if key == "story":
-            buttons = []
+            btn_type, buttons = None, []
         else:
-            buttons = self.simple_keyboard()
+            btn_type, buttons = self.simple_keyboard()
 
         # @Important: Trigger different state to ask QA
         if key == "QA_TRIGGER":
@@ -113,25 +114,21 @@ class BasicQuestionState(base_state.BaseState):
     # Buttons, according to schema
 
     def simple_keyboard(self):
-        return [
+        return "text", [
             {
-                "type": "text",
                 "text": self.strings['yes']
              },
             {
-                "type": "text",
                 "text": self.strings['no']
              },
             {
-                "type": "text",
                 "text": self.strings['back']
              }
         ]
 
     def lang_keyboard(self):
-        return [
+        return "inline", [
             {
-                "type": "inline",
                 "text": key,
                 "value": f"lang_{key}"
             }

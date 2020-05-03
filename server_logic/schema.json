@@ -291,6 +291,17 @@
             "type": "boolean",
             "default": false
         },
+        "buttons_type": {
+            "oneOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "default": null
+        },
         "buttons": {
             "type": "array",
             "default": [],
