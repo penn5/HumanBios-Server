@@ -1,9 +1,3 @@
-[submodule "qa-module"]
-	path = qa-module
-	url = git@github.com:HumanbiOS/QA-module.git
-[submodule "qa_module"]
-	path = qa_module
-	url = git@github.com:HumanbiOS/QA-module.git
 [submodule "strings/qa_module"]
 	path = strings/qa_module
 	url = git@github.com:HumanbiOS/QA-module.git
