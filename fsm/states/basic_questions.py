@@ -8,8 +8,8 @@ from . import base_state
 ORDER = {
     1: "choose_lang", 2: "disclaimer", 3: "story", 4: "medical",
     5: "QA_TRIGGER", 6: "stressed", 7: "mental", 8: "wanna_help",
-    9: "helping", 10: "bye", 11: "location", 12: "selfie",
-    13: "coughing", 14: "forward_doctor"
+    9: "helping", 10: "location", 11: "selfie",
+    12: "coughing", 13: "forward_doctor"
 }
 
 
@@ -71,8 +71,8 @@ class BasicQuestionState(base_state.BaseState):
                 db[user.identity]['resume'][key] = context['request']['message']['text']
 
         # Conversation killers / Key points
-        # Denied disclaimer
-        if key == "disclaimer" and raw_text == self.strings['no']:
+        # Denied disclaimer (or end of conv)
+        if (key == "disclaimer" or key == "wanna_help") and raw_text == self.strings['no']:
             context['request']['message']['text'] = self.strings["bye"]
             context['request']['buttons'] = []
             context['request']['has_buttons'] = False
@@ -84,6 +84,18 @@ class BasicQuestionState(base_state.BaseState):
             user.current_state = None
             db[user.identity]['states'].clear()
             return base_state.OK
+        # if not medical -> jump to `stressed` question
+        elif key == "medical" and raw_text == self.strings['no']:
+            user.current_state += 1
+        # if not stressed -> jump to `wanna_help`
+        elif key == "stressed" and raw_text == self.strings['no']:
+            user.current_state += 1
+        elif key == "mental" and raw_text == self.strings['yes']:
+            # TODO: I don't get what it should do but ok
+            ...
+        elif key == "helping" and raw_text == self.strings['yes']:
+            # TODO: I don't get what it should do but ok X2
+            ...
 
         # Back button
         if raw_text == self.strings['back']:

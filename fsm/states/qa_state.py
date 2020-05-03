@@ -52,7 +52,7 @@ class QAState(base_state.BaseState):
         if next_q:
             self.set_data(context, next_q)
         else:
-            user.current_state = 11
+            user.current_state = 10
             return base_state.GO_TO_STATE("BasicQuestionState")
         # Send message
         self.send(user, context)
