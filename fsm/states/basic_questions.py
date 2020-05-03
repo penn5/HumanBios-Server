@@ -100,7 +100,7 @@ class BasicQuestionState(base_state.BaseState):
         elif key == "coughing" and raw_text == self.strings['yes']:
             return self.request_method(context, user, user.types.MEDIC, "forward_doctor")
         elif key == "helping" and raw_text == self.strings['yes']:
-            # TODO: I don't get what it should do but ok
+            # TODO: Is not implemented yet
             ...
 
         # Back button
@@ -118,7 +118,7 @@ class BasicQuestionState(base_state.BaseState):
         else:
             btn_type, buttons = self.simple_keyboard()
 
-        # @Important: Trigger different state to ask QA
+        # @Important: Trigger different state to ask covapp QA
         if key == "QA_TRIGGER":
             return base_state.GO_TO_STATE("QAState")
 
