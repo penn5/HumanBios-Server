@@ -16,7 +16,9 @@ class QAState(base_state.BaseState):
         return base_state.OK
 
     async def process(self, context, user, db):
+        # Get saved current question
         curr_q = db[user.identity]['qa']['q']
+        # Alias for text answer
         raw_answer = context['request']['message']['text']
 
         # Important: hack, has to be used to treat truncated answers from facebook
@@ -44,7 +46,6 @@ class QAState(base_state.BaseState):
         elif raw_answer in curr_q.answers:
             next_q_id = curr_q.answers[raw_answer]
 
-        print(curr_q, f"\nnext id: {next_q_id}\n")
         # Get next question
         next_q = get_next_question(user.identity, user.language, next_q_id)
         # Set next question

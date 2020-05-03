@@ -146,7 +146,6 @@ class ConversationDispatcher(object):
         if conv is not None:
             self.active_conversations.remove(conv)
 
-    def request_conversation(self, user_entity, type_: User.types):
-        new_user = User(user_entity)
-        req = ConversationRequest(new_user, type_)
+    def request_conversation(self, user: User, type_: User.types):
+        req = ConversationRequest(user.identity, type_)
         self.conversation_requests.add(req)

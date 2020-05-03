@@ -1,3 +1,4 @@
+from db_models.conversations import ConversationDispatcher
 from server_logic.definitions import Context, SenderTask
 from settings import tokens, logger, ROOT_PATH
 from translation import Translator
@@ -47,6 +48,9 @@ class BaseState(object):
 
         # @Important: instantiate translator
         self.translator = Translator()
+
+        # @Important: instantiate conversations broker
+        self.convo_broker = ConversationDispatcher()
 
     # Getter method for strings, that gives string prepared in user's language
     @property

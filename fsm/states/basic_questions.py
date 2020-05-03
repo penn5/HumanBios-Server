@@ -5,11 +5,12 @@ from . import base_state
 # TODO: Hardcoded order is bad (?), find a way to order everything
 # TODO: in json file, much like covapp, so we will be able to change
 # TODO: order/text/buttons etc via external api
+# @Important: DONT CHANGE, IF CHANGED -> review all the code below AND in other states
 ORDER = {
     1: "choose_lang", 2: "disclaimer", 3: "story", 4: "medical",
     5: "QA_TRIGGER", 6: "stressed", 7: "mental", 8: "wanna_help",
     9: "helping", 10: "location", 11: "selfie",
-    12: "coughing", 13: "forward_doctor"
+    12: "coughing"
 }
 
 
@@ -28,7 +29,7 @@ class BasicQuestionState(base_state.BaseState):
         self.send(user, context)
         return base_state.OK
 
-    async def process(self, context, user, db):
+    async def process(self, context, user: User, db):
         key = ORDER.get(user.current_state)
         # Raw text alias
         raw_text: str = context['request']['message']['text']
@@ -90,11 +91,14 @@ class BasicQuestionState(base_state.BaseState):
         # if not stressed -> jump to `wanna_help`
         elif key == "stressed" and raw_text == self.strings['no']:
             user.current_state += 1
+        # @Important: create doctor request
         elif key == "mental" and raw_text == self.strings['yes']:
-            # TODO: I don't get what it should do but ok
-            ...
+            #donotrepeatyourcode
+            return self.request_method(context, user, user.types.SOCIAL, "forward_shrink")
+        elif key == "coughing" and raw_text == self.strings['yes']:
+            return self.request_method(context, user, user.types.MEDIC, "forward_doctor")
         elif key == "helping" and raw_text == self.strings['yes']:
-            # TODO: I don't get what it should do but ok X2
+            # TODO: I don't get what it should do but ok
             ...
 
         # Back button
@@ -146,3 +150,13 @@ class BasicQuestionState(base_state.BaseState):
             }
             for key in self.languages
         ]
+
+    def request_method(self, context, user: User, type_: User.types, forward_name: str):
+        # request created
+        self.convo_broker.request_conversation(user, user.types.SOCIAL)
+        # Send user message, that the request was created
+        context['request']['message']['text'] = self.strings[forward_name]
+        self.send(user, context)
+        # @Important: Don't change user's state. It will be changed when the conversation
+        # @Important: will start, and both users are sent to the conversation state
+        return base_state.GO_TO_STATE("AFKState")
