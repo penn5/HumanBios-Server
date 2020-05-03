@@ -95,6 +95,7 @@ class ConversationRequests:
 
 
 class ConversationDispatcher(object):
+    _initialized = False
     __instance = None
     LIMIT_CONCURRENT_CHATS = 100
 
