@@ -14,12 +14,13 @@ class StartState(base_state.BaseState):
         # Download profile pictures
         if context['request']['service_in'] == ServiceTypes.TELEGRAM:
             # TODO: ADD SEPARATE CHECK IN SCHEMA IF FILE IS URL or BYTES
+            # If request from telegram -> we can't download images currently from there
             if context['request']['has_file'] and context['request']['has_image']:
                 raise NotImplementedError("Downloading files from telegram is not implemented yet. "
                                           "See `start_state.py`.")
+        # @Important: If facebook or else (just url to profile)
         else:
-            # If facebook or else (just url to profile)
-            # If file do not exist
+            # If profile image file do not exist yet
             if not self.file_exists(f'user_{user.identity}', 'profile.png'):
                 # If request has a file and this file is an image
                 if context['request']['has_image']:
@@ -27,7 +28,9 @@ class StartState(base_state.BaseState):
                     # TODO: no files -> return(403) with description
                     # Should be only one profile picture
                     url = context['request']['files'][0]['payload']
+                    # Downloading file and getting path to the file
                     path = await self.download_by_url(url, f'user_{user.identity}', 'profile.png')
+                    # Assign value to the user picture path
                     user.profile_picture = path
         # Edit context to not have file
         context['request']['has_file'] = False

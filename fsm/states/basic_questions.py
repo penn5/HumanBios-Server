@@ -23,7 +23,7 @@ class BasicQuestionState(base_state.BaseState):
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
             context['request']['has_buttons'] = False
-            # Don't forget to send message
+            # Don't forget to add task
             self.send(user, context)
             return base_state.OK
         else:
@@ -35,60 +35,82 @@ class BasicQuestionState(base_state.BaseState):
             context['request']['message']['text'] = self.strings["choose_lang"]
             context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
             context['request']['has_buttons'] = True
-            # Don't forget to send message
+            # Don't forget to add task
             self.send(user, context)
             return base_state.OK
 
     async def process(self, context, user: User, db):
+        # Take key associated with state
         key = ORDER.get(user.current_state)
         # Raw text alias
         raw_text: str = context['request']['message']['text']
 
-        # Dialog steps that require not trivial/free input
+        # Dialog steps that require non-trivial/free input
         free_answers = ["story", "helping", "location", "selfie", "coughing"]
-
+        # If choose language (first) state
         if key == "choose_lang":
-            language = raw_text[5:]
+            # Cut data to extract language (e.g. `lang-en` -> `en`)
+            # TODO: Change language buttons data to avoid cutting, make them just `en` etc
+            try:
+                language = raw_text[5:]
+            # Make sure user input is not too short to break the code
+            except IndexError:
+                language = ""
+            # If user input is not in the languages -> return error message
             if language not in self.languages:
                 context['request']['message']['text'] = self.strings["qa_error"]
                 context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
                 context['request']['has_buttons'] = True
-                # Don't forget to send message
+                # Don't forget to add task
                 self.send(user, context)
                 return base_state.OK
             else:
+                # If legit language -> save language to the user
                 user.language = language
+                # @Important: And set current context to the new language
+                # @Important: (Will be done automatically with the next event)
                 self.set_language(user.language)
-        # Recording the answers
+        # Recording the answers, if skipped first two steps
         elif user.current_state > 2:
             # @Important: If user sends selfie - download the image
             if key == "selfie" and context['request']['has_image']:
                 # Should be only one selfie picture
+                # TODO: Store all users input
                 url = context['request']['files'][0]['payload']
                 # Download selfie in the user's folder
                 path = await self.download_by_url(url, f'user_{user.identity}', 'selfie.png')
-                # TODO: Serve files somehow to allow remote access via front ends
-                # TODO: @Important: Need to keep private access, so we need static files server
-                # TODO: @Important: that will create tokens and timestamps and allows time limited access
+                # TODO: @Important: Serve files somehow to allow remote access via front ends
+                # TODO: @Important: Need to keep private access, so we need static files server that will
+                # TODO: @Important: create tokens and timestamps and allows time limited access to user data
+                # Save filepath to the user's resume
                 db[user.identity]['resume']['selfie_path'] = path
+            # @Important: bad value fallback
             else:
-                # @Important: bad value fallback
+                # Set of buttons, in the user's language
                 common_buttons = [self.strings['yes'], self.strings['no'], self.strings['back']]
+                # Check if the question has strictly typed answer AND
+                # it is one of the answers (buttons)
                 if key not in free_answers and raw_text not in common_buttons:
                     # Tell user about invalid input
                     context['request']['message']['text'] = self.strings['qa_error']
                     self.send(user, context)
-                    # Repeat the message
+                    # Repeat the question message
                     context['request']['message']['text'] = self.strings[key]
                     context['request']['buttons_type'], context['request']['buttons'] = self.simple_keyboard()
                     context['request']['has_buttons'] = True
                     self.send(user, context)
                     return base_state.OK
+                # @Important: tracking (saving) user input
                 # Make sure not to track `back` button
                 if raw_text != self.strings['back']:
                     # TODO: Make sure to download links etc
-                    # Record answer to the question
-                    db[user.identity]['resume'][key] = context['request']['message']['text']
+                    # If current question is `location` -> save to the user data
+                    if key == 'location':
+                        user.last_location = raw_text
+                    # Else record answer as a simple text
+                    else:
+                        # Record answer to the question
+                        db[user.identity]['resume'][key] = context['request']['message']['text']
 
         # Conversation killers / Key points
         # Bonus value to skip one state
@@ -109,6 +131,7 @@ class BasicQuestionState(base_state.BaseState):
             return base_state.OK
         # if not medical -> jump to `stressed` question
         elif key == "medical" and raw_text == self.strings['no']:
+            # Add one to the state, so state will jump as we want (change in order will break it)
             bonus_value = 1
         # if not stressed -> jump to `wanna_help`
         elif key == "stressed" and raw_text == self.strings['no']:
@@ -128,8 +151,10 @@ class BasicQuestionState(base_state.BaseState):
         if raw_text == self.strings['back']:
             # Ensure jump from `location` -> `covapp QA`
             if key == "QA_TRIGGER":
+                # Set to the qa state
                 user.current_state = 5
             else:
+                # else go one step back
                 user.current_state -= 1
         # TODO: Add conditional `skip` button
         else:
@@ -138,16 +163,19 @@ class BasicQuestionState(base_state.BaseState):
 
         # Update current key
         key = ORDER.get(user.current_state)
+        # Get button type and yes/no/back keyboard
         btn_type, buttons = self.simple_keyboard()
-        # If key is in the free answers
+        # If key is in the free answers -> remove keyboard
         if key in free_answers:
+            # Leave only `back` button
             buttons = [{"text": self.strings['back']}]
 
         # @Important: Trigger different state to ask covapp QA
         if key == "QA_TRIGGER":
+            # Go to the qa state `entry()` instead
             return base_state.GO_TO_STATE("QAState")
 
-        # Set values to the answer
+        # Prepare values of the `answer request`
         context['request']['message']['text'] = self.strings[key]
         context['request']['buttons'] = buttons
         context['request']['has_buttons'] = bool(buttons)
@@ -158,6 +186,10 @@ class BasicQuestionState(base_state.BaseState):
 
     # Buttons, according to schema
 
+    # Three buttons in the row
+    # TODO: Change schema to accept matrix of buttons instead of list
+    # TODO: (We want to be able to prepare 2D matrix of buttons, for
+    # TODO: services like facebook, we then should unpack them into one row)
     def simple_keyboard(self):
         return "text", [
             {
@@ -171,6 +203,8 @@ class BasicQuestionState(base_state.BaseState):
              }
         ]
 
+    # Buttons of all possible languages
+    # TODO: Also make sure to make them into proper 2D matrix
     def lang_keyboard(self):
         return "inline", [
             {
@@ -180,6 +214,7 @@ class BasicQuestionState(base_state.BaseState):
             for key in self.languages
         ]
 
+    # @Important: shortcut method for few actions
     def request_method(self, context, user: User, type_: User.types, forward_name: str):
         # request created
         self.convo_broker.request_conversation(user, user.types.SOCIAL)
