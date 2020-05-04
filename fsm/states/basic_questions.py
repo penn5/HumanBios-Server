@@ -5,6 +5,8 @@ from . import base_state
 # TODO: Hardcoded order is bad (?), find a way to order everything
 # TODO: in json file, much like covapp, so we will be able to change
 # TODO: order/text/buttons etc via external api
+# TODO: But, of course, all that makes no sense, because there is a lot of code
+# TODO: that depends on the order, and a lot of new code has to be inserted in case of change
 # @Important: DONT CHANGE, IF CHANGED -> review all the code below AND in other states
 ORDER = {
     1: "choose_lang", 2: "disclaimer", 3: "story", 4: "medical",
@@ -16,7 +18,15 @@ ORDER = {
 class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
-        if user.current_state is None:
+        # If returning to the state from somewhere, with current_state -> continue
+        if user.current_state == 10:
+            # Send location message
+            context['request']['message']['text'] = self.strings["location"]
+            context['request']['has_buttons'] = False
+            # Don't forget to send message
+            self.send(user, context)
+            return base_state.OK
+        else:
             # @Important: Default starting state
             user.current_state = 1
             # @TMP: initiate resume, to record user answers
@@ -25,14 +35,6 @@ class BasicQuestionState(base_state.BaseState):
             context['request']['message']['text'] = self.strings["choose_lang"]
             context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
             context['request']['has_buttons'] = True
-            # Don't forget to send message
-            self.send(user, context)
-            return base_state.OK
-        else:
-            # If returning to the state from somewhere, with current_state -> continue
-            # Send location message
-            context['request']['message']['text'] = self.strings["location"]
-            context['request']['has_buttons'] = False
             # Don't forget to send message
             self.send(user, context)
             return base_state.OK
@@ -125,6 +127,7 @@ class BasicQuestionState(base_state.BaseState):
         # Back button
         if raw_text == self.strings['back']:
             user.current_state -= 1
+        # TODO: Add conditional `skip` button
         else:
             # Update current state
             user.current_state += 1 + bonus_value
