@@ -145,7 +145,7 @@ class BasicQuestionState(base_state.BaseState):
             return self.request_method(context, user, user.types.MEDIC, "forward_doctor")
         elif key == "helping" and raw_text == self.strings['yes']:
             # TODO: Is not implemented yet
-            ...
+            return base_state.GO_TO_STATE("AFKState")
 
         # Back button
         if raw_text == self.strings['back']:
