@@ -126,7 +126,11 @@ class BasicQuestionState(base_state.BaseState):
 
         # Back button
         if raw_text == self.strings['back']:
-            user.current_state -= 1
+            # Ensure jump from `location` -> `covapp QA`
+            if key == "QA_TRIGGER":
+                user.current_state = 5
+            else:
+                user.current_state -= 1
         # TODO: Add conditional `skip` button
         else:
             # Update current state
