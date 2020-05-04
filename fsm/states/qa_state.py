@@ -41,6 +41,10 @@ class QAState(base_state.BaseState):
             context['request']['message']['text'] = self.strings['invalid_answer']
             context['request']['has_buttons'] = False
             self.send(user, context)
+            # Repeat the question
+            self.set_data(context, curr_q)
+            # Sent another message
+            self.send(user, context)
             return base_state.OK
         # Record the answer
         db[user.identity]['qa']['qa_results'][curr_q.id] = raw_answer
