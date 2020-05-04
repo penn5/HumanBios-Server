@@ -71,7 +71,7 @@ class BasicQuestionState(base_state.BaseState):
                 # @Important: (Will be done automatically with the next event)
                 self.set_language(user.language)
         # Recording the answers, if skipped first two steps
-        elif user.current_state > 2:
+        else:
             # @Important: If user sends selfie - download the image
             if key == "selfie" and context['request']['has_image']:
                 # Should be only one selfie picture
