@@ -25,6 +25,12 @@ class QAState(base_state.BaseState):
         # Alias for text answer
         raw_answer = context['request']['message']['text']
 
+        # Handle edge buttons
+        # If `stop` button -> kill dialog
+        if raw_answer == self.strings['stop']:
+            # Jump from current state to final `end` state
+            return base_state.GO_TO_STATE("ENDState")
+
         # Important: hack, has to be used to treat truncated answers from facebook
         if context['request']['service_in'] == ServiceTypes.FACEBOOK:
             # For each answer, check if truncated answer is the beginning of real answer
@@ -77,13 +83,19 @@ class QAState(base_state.BaseState):
 
     # @Important: easy method to prepare context
     def set_data(self, context, question):
+        # Set according text
         context['request']['message']['text'] = question.text
+        # Sometimes questions have useful `note`
         if question.comment:
             context['request']['message']['text'] += f"\n\n{question.comment}"
 
+        # Always have buttons
+        context['request']['has_buttons'] = True
+        context['request']['buttons_type'] = "text"
+        # If not a free question -> add it's buttons
         if not question.free:
-            context['request']['has_buttons'] = True
             context['request']['buttons'] = [{"text": answer} for answer in question.answers]
-            context['request']['buttons_type'] = "text"
         else:
-            context['request']['has_buttons'] = False
+            context['request']['buttons'] = []
+        # Always add edge buttons
+        context['request']['buttons'] += [{"text": self.strings['stop']}]

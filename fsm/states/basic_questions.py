@@ -86,8 +86,8 @@ class BasicQuestionState(base_state.BaseState):
                 db[user.identity]['resume']['selfie_path'] = path
             # @Important: bad value fallback
             else:
-                # Set of buttons, in the user's language
-                common_buttons = [self.strings['yes'], self.strings['no'], self.strings['back']]
+                # Set of buttons, according user's language
+                common_buttons = [self.strings['yes'], self.strings['no'], self.strings['back'], self.strings['stop']]
                 # Check if the question has strictly typed answer AND
                 # it is one of the answers (buttons)
                 if key not in free_answers and raw_text not in common_buttons:
@@ -102,7 +102,7 @@ class BasicQuestionState(base_state.BaseState):
                     return base_state.OK
                 # @Important: tracking (saving) user input
                 # Make sure not to track `back` button
-                if raw_text != self.strings['back']:
+                if raw_text not in [self.strings['back'], self.strings['stop']]:
                     # TODO: Make sure to download links etc
                     # If current question is `location` -> save to the user data
                     if key == 'location':
@@ -156,6 +156,10 @@ class BasicQuestionState(base_state.BaseState):
             else:
                 # else go one step back
                 user.current_state -= 1
+        # Stop button
+        elif raw_text == self.strings['stop']:
+            # Jump from current state to final `end` state
+            return base_state.GO_TO_STATE("ENDState")
         # TODO: Add conditional `skip` button
         else:
             # Update current state
@@ -167,10 +171,10 @@ class BasicQuestionState(base_state.BaseState):
         btn_type, buttons = self.simple_keyboard()
         # If key is in the free answers -> remove keyboard
         if key in free_answers:
-            # Leave only `back` button
-            buttons = [{"text": self.strings['back']}]
-        # @Important: If user presses `back` button and returns to the language
-        # @Important: set buttons to the language names
+            # Leave only `back` and  button
+            buttons = [{"text": self.strings['back']}, {"text": self.strings['stop']}]
+        # @Important: If user presses `back` button and returns to the language -
+        # @Important: set buttons to the language names (edge case)
         elif key == "choose_lang":
             # Change also button type to inline
             btn_type, buttons = self.lang_keyboard()
@@ -205,7 +209,10 @@ class BasicQuestionState(base_state.BaseState):
              },
             {
                 "text": self.strings['back']
-             }
+             },
+            {
+                "text": self.strings['stop']
+            }
         ]
 
     # Buttons of all possible languages
