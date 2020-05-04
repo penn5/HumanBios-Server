@@ -169,6 +169,11 @@ class BasicQuestionState(base_state.BaseState):
         if key in free_answers:
             # Leave only `back` button
             buttons = [{"text": self.strings['back']}]
+        # @Important: If user presses `back` button and returns to the language
+        # @Important: set buttons to the language names
+        elif key == "choose_lang":
+            # Change also button type to inline
+            btn_type, buttons = self.lang_keyboard()
 
         # @Important: Trigger different state to ask covapp QA
         if key == "QA_TRIGGER":
