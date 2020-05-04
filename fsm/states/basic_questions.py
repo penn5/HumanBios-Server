@@ -9,8 +9,7 @@ from . import base_state
 ORDER = {
     1: "choose_lang", 2: "disclaimer", 3: "story", 4: "medical",
     5: "QA_TRIGGER", 6: "stressed", 7: "mental", 8: "wanna_help",
-    9: "helping", 10: "location", 11: "selfie",
-    12: "coughing"
+    9: "helping", 10: "location", 11: "selfie", 12: "coughing"
 }
 
 
@@ -30,12 +29,21 @@ class BasicQuestionState(base_state.BaseState):
             self.send(user, context)
             return base_state.OK
         else:
-            return await self.process(context, user, db)
+            # If returning to the state from somewhere, with current_state -> continue
+            # Send location message
+            context['request']['message']['text'] = self.strings["location"]
+            context['request']['has_buttons'] = False
+            # Don't forget to send message
+            self.send(user, context)
+            return base_state.OK
 
     async def process(self, context, user: User, db):
         key = ORDER.get(user.current_state)
         # Raw text alias
         raw_text: str = context['request']['message']['text']
+
+        # Dialog steps that require not trivial/free input
+        free_answers = ["story", "helping", "location", "selfie", "coughing"]
 
         if key == "choose_lang":
             language = raw_text[5:]
@@ -63,7 +71,8 @@ class BasicQuestionState(base_state.BaseState):
                 db[user.identity]['resume']['selfie_path'] = path
             else:
                 # @Important: bad value fallback
-                if key != "story" and raw_text not in [self.strings['yes'], self.strings['no'], self.strings['back']]:
+                common_buttons = [self.strings['yes'], self.strings['no'], self.strings['back']]
+                if key not in free_answers and raw_text not in common_buttons:
                     # Tell user about invalid input
                     context['request']['message']['text'] = self.strings['qa_error']
                     self.send(user, context)
@@ -73,8 +82,11 @@ class BasicQuestionState(base_state.BaseState):
                     context['request']['has_buttons'] = True
                     self.send(user, context)
                     return base_state.OK
-                # Record answer to the question
-                db[user.identity]['resume'][key] = context['request']['message']['text']
+                # Make sure not to track `back` button
+                if raw_text != self.strings['back']:
+                    # TODO: Make sure to download links etc
+                    # Record answer to the question
+                    db[user.identity]['resume'][key] = context['request']['message']['text']
 
         # Conversation killers / Key points
         # Bonus value to skip one state
@@ -90,6 +102,7 @@ class BasicQuestionState(base_state.BaseState):
             self.send(user, context)
             # Reset the flow
             user.current_state = None
+            # Clear list of states related to the user
             db[user.identity]['states'].clear()
             return base_state.OK
         # if not medical -> jump to `stressed` question
@@ -98,11 +111,12 @@ class BasicQuestionState(base_state.BaseState):
         # if not stressed -> jump to `wanna_help`
         elif key == "stressed" and raw_text == self.strings['no']:
             bonus_value = 1
-        # @Important: create doctor request
+        # @Important: create social request
         elif key == "mental" and raw_text == self.strings['yes']:
             #donotrepeatyourcode
             return self.request_method(context, user, user.types.SOCIAL, "forward_shrink")
-        elif key == "coughing" and raw_text == self.strings['yes']:
+        # @Important: if coughing (last state) -> request doctor conversation
+        elif key == "coughing":
             return self.request_method(context, user, user.types.MEDIC, "forward_doctor")
         elif key == "helping" and raw_text == self.strings['yes']:
             # TODO: Is not implemented yet
@@ -117,11 +131,10 @@ class BasicQuestionState(base_state.BaseState):
 
         # Update current key
         key = ORDER.get(user.current_state)
-
-        if key == "story":
-            btn_type, buttons = None, []
-        else:
-            btn_type, buttons = self.simple_keyboard()
+        btn_type, buttons = self.simple_keyboard()
+        # If key is in the free answers
+        if key in free_answers:
+            buttons = [{"text": self.strings['back']}]
 
         # @Important: Trigger different state to ask covapp QA
         if key == "QA_TRIGGER":
@@ -131,6 +144,7 @@ class BasicQuestionState(base_state.BaseState):
         context['request']['message']['text'] = self.strings[key]
         context['request']['buttons'] = buttons
         context['request']['has_buttons'] = bool(buttons)
+        context['request']['buttons_type'] = btn_type
 
         self.send(user, context)
         return base_state.OK

@@ -5,7 +5,6 @@ from translation import Translator
 from aiohttp import ClientSession
 from strings import strings_text
 from db_models import User
-from copy import deepcopy
 import aiofiles
 import asyncio
 import os
@@ -157,7 +156,7 @@ class BaseState(object):
         if self.tasks.get(id(context)) is None:
             # @Important: 1) Using id() to provide completely unique key for the current `process` method
             # @Important: 2) Making deep copy of the object, because in different calls values will
-            # @Important:    most surely be different, so we don't want to just pass old object pointer
+            # @Important:    most surely be different, so we don't want to just pass pointer to the old object
             self.tasks[id(context)] = [SenderTask(to_user, context.deepcopy())]
         else:
             self.tasks[id(context)].append(SenderTask(to_user, context.deepcopy()))

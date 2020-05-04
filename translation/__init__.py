@@ -7,7 +7,7 @@ import ujson
 class Translator:
     URL = f"https://translation.googleapis.com/language/translate/v2?key={CLOUD_TRANSLATION_API_KEY}"
     HEADERS = {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
     }
 
     # @Thought: Maybe drop __init__ func and move key to the class var
@@ -39,7 +39,10 @@ class Translator:
         new_texts = dict()
         async with ClientSession() as session:
             for key, each_text in texts.items():
-                new_text = await self.translate_text(target, each_text, session)
+                new_text: str = await self.translate_text(target, each_text, session)
+                #:< Hacks
+                new_text = new_text.replace("& deg;", "°")
+                #
                 new_texts[key] = new_text
         return new_texts
 
