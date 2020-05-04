@@ -50,11 +50,13 @@ class BasicQuestionState(base_state.BaseState):
         # If choose language (first) state
         if key == "choose_lang":
             # Cut data to extract language (e.g. `lang-en` -> `en`)
-            # TODO: Change language buttons data to avoid cutting, make them just `en` etc
+            # TODO: 1) Change language buttons data to avoid cutting, make them just `en` etc
+            # TODO: 2) Due to current implementation on the front-end (see 1), raises NonType error
+            # TODO:    when users enters invalid input with inline buttons
+            # TODO: @Important: Also, make sure user input is not too short to break the code
             try:
                 language = raw_text[5:]
-            # Make sure user input is not too short to break the code
-            except IndexError:
+            except:
                 language = ""
             # If user input is not in the languages -> return error message
             if language not in self.languages:
