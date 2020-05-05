@@ -29,6 +29,9 @@ class GO_TO_STATE:
 
 
 class BaseState(object):
+    HEADERS = {
+        "Content-Type": "application/json"
+    }
     has_entry = True
 
     # Prepare state
@@ -136,7 +139,7 @@ class BaseState(object):
 
     async def _send(self, task: SenderTask, session: ClientSession):
         url = tokens[task.user.via_instance].url
-        async with session.post(url, json=task.context.to_dict()) as resp:
+        async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
             if resp.status == 200:
                 result = await resp.json()
                 logger.info(f"Sending task status: {result}")
