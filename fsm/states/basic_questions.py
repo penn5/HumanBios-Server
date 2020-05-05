@@ -62,7 +62,7 @@ class BasicQuestionState(base_state.BaseState):
             except:
                 language = ""
             # If user input is not in the languages -> return error message
-            if language not in self.languages:
+            if language not in self.LANGUAGES:
                 context['request']['message']['text'] = self.strings["qa_error"]
                 context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
                 context['request']['has_buttons'] = True

@@ -13,7 +13,7 @@ class Handler(object):
         self.__register_states(*states.collect())
 
     def __register_state(self, state_class):
-        self.__states[state_class.__name__] = state_class()
+        self.__states[state_class.__name__] = state_class
 
     def __register_states(self, *states_):
         for state in states_:
@@ -25,8 +25,10 @@ class Handler(object):
         state = self.__states.get(name)
         if state is None:
             # If non-existing state - send user to the start state
-            return False, self.__states[self.__start_state], self.__start_state
-        return True, state, name
+            # @Important: Don't forget to initialize the state
+            return False, self.__states[self.__start_state].__init__(), self.__start_state
+        # @Important: Don't forget to initialize the state
+        return True, state.__init__(), name
 
     async def __get_or_register_user(self, context):
         # Using dummy db for now
@@ -50,13 +52,14 @@ class Handler(object):
         pass
 
     async def process(self, context):
+        # Getting or registering user
         user = await self.__get_or_register_user(context)
-        # Ddos protection triggered
-        if user is None:
-            return
+        # Finding last registered state of the user
         last_state = await self.last_state(user, context)
+        # Looking for state, creating state object
         correct_state, current_state, current_state_name = self.__get_state(last_state)
         if not correct_state:
+            # Registering new last state
             DUMMY_DB[user.identity]['states'].append(current_state_name)
         # Call process method of some state
         ret_code = await current_state.wrapped_process(context, user, DUMMY_DB)
@@ -79,6 +82,8 @@ class Handler(object):
 
     async def __handle_ret_code(self, context, user, ret_code):
         # Handle return codes
+        #    If status is OK -> Done
+        #    If status is GO_TO_STATE -> proceed executing wanted state
         if ret_code == states.OK:
             return
         elif isinstance(ret_code, states.GO_TO_STATE):

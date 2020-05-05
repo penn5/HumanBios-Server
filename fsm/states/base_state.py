@@ -32,27 +32,30 @@ class BaseState(object):
     HEADERS = {
         "Content-Type": "application/json"
     }
+    # This variable allows to ignore `entry()` when needed
     has_entry = True
+    # All translations
+    __STRINGS = strings_text
+    # ALL languages
+    LANGUAGES = strings_text.keys()
+    # @Important: instantiate translator
+    TRANSLATOR = Translator()
+    # Media path and folder
+    media_folder = "media"
+    media_path = os.path.join(ROOT_PATH, media_folder)
+
+    if not os.path.exists(media_path):
+        os.mkdir(media_path)
+
+    # @Important: instantiate conversations broker
+    convo_broker = ConversationDispatcher()
 
     # Prepare state
     def __init__(self):
+        # Keeps list of tasks
         self.tasks = dict()
-        self.media_folder = "media"
-        self.media_path = os.path.join(ROOT_PATH, self.media_folder)
-
-        if not os.path.exists(self.media_path):
-            os.mkdir(self.media_path)
-
-        # @Important: easy way to access all string tokens
-        self.__strings = strings_text
+        # Create language variable
         self.__language = 'en'
-        self.languages = strings_text.keys()
-
-        # @Important: instantiate translator
-        self.translator = Translator()
-
-        # @Important: instantiate conversations broker
-        self.convo_broker = ConversationDispatcher()
 
     @property
     def strings(self):
@@ -62,16 +65,17 @@ class BaseState(object):
         Returns:
             dict: strings of the user language
         """
-        return self.__strings[self.__language]
+        return self.__STRINGS[self.__language]
 
     def set_language(self, value: str):
         """
         This method sets language to a current state
+        If language is None - base language version is english
 
         Args:
             value (str): language code of the user's country
         """
-        self.__language = value
+        self.__language = value or "en"
 
     async def wrapped_entry(self, context, user, db):
         # Prepare language for state
@@ -141,7 +145,7 @@ class BaseState(object):
     # @Important: because a) it's not good enough, b) it takes time to make
     # @Important: a call to the google cloud api
     async def translate(self, target: str, text: str) -> str:
-        return await self.translator.translate_text(target, text)
+        return await self.TRANSLATOR.translate_text(target, text)
 
     # Sugar
 
