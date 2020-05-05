@@ -53,7 +53,7 @@ class BaseState(object):
     # Prepare state
     def __init__(self):
         # Keeps list of tasks
-        self.tasks = dict()
+        self.tasks = set()
         # Create language variable
         self.__language = 'en'
 
@@ -87,7 +87,7 @@ class BaseState(object):
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
-        if self.tasks.get(id(context)):
+        if self.tasks:
             # @Important: collect all requests
             _results = await self.collect(user, context)
         return status
@@ -102,7 +102,7 @@ class BaseState(object):
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
-        if self.tasks.get(id(context)):
+        if self.tasks:
             # @Important: collect all requests
             _results = await self.collect(user, context)
         return status
@@ -158,11 +158,9 @@ class BaseState(object):
             # group = asyncio.gather(*tasks)
             # results = await group
             # return results
-            for each_task in self.tasks[id(context)]:
+            for each_task in self.tasks:
                 res = await self._send(each_task, session)
                 results.append(res)
-            # @Important: Clear object after working with it
-            del self.tasks[id(context)]
         return results
 
     # @Important: Real send method, takes SenderTask as argument
@@ -188,11 +186,4 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
-
-        if self.tasks.get(id(context)) is None:
-            # @Important: 1) Using id() to provide completely unique key for the current `process` method
-            # @Important: 2) Making deep copy of the object, because in different calls values will
-            # @Important:    most surely be different, so we don't want to just pass pointer to the old object
-            self.tasks[id(context)] = [SenderTask(to_user, context.deepcopy())]
-        else:
-            self.tasks[id(context)].append(SenderTask(to_user, context.deepcopy()))
+        self.tasks.add(SenderTask(to_user, context.deepcopy()))
