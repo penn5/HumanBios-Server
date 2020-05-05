@@ -75,6 +75,9 @@ async def rasa_get_facility(request):
 async def worker_setup(request):
     # get data from request
     data = request.json
+    # If not data -> return "expected json"
+    if not data:
+        return json({"status": 403, "message": "expected json"})
     # get security token from the data
     token = data.get("security_token", "")
     # Verify security token (of the server)
@@ -85,14 +88,21 @@ async def worker_setup(request):
     # Generate new token and pull url
     if not url:
         return json({"status": 403, "message": "url invalid"})
+
     # Generate new token and name for the instance
+    # @Important: 40 bytes token is > 50 characters long
     new_token = secrets.token_urlsafe(40)
+    # @Important: Conveniently cut to length of 40
+    new_token = new_token[:40]
+    # @Important: Token hex returns n * 2 amount of symbols
     name = secrets.token_hex(10)
+    # [DEBUG]: assert len(name) == 20
+
     # Save data on the server
     config_obj = Config(new_token, url)
     tokens[name] = config_obj
     # Return useful data back to the caller
-    return json({"name": name, "token": new_token})
+    return json({"status": 200, "name": name, "token": new_token})
 
 
 if __name__ == '__main__':
