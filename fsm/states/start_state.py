@@ -21,7 +21,7 @@ class StartState(base_state.BaseState):
         # @Important: If facebook or else (just url to profile)
         else:
             # If profile image file do not exist yet
-            if not self.file_exists(f'user_{user.identity}', 'profile.png'):
+            if not self.exists(f'user_{user.identity}', 'profile.png'):
                 # If request has a file and this file is an image
                 if context['request']['has_image']:
                     # TODO: ADD CHECK IF `is_file` or any of `is_{media}` is checked, BUT

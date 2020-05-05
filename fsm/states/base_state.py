@@ -54,15 +54,29 @@ class BaseState(object):
         # @Important: instantiate conversations broker
         self.convo_broker = ConversationDispatcher()
 
-    # Getter method for strings, that gives string prepared in user's language
     @property
     def strings(self):
+        """
+        This property simplifies the access to strings
+
+        Returns:
+            dict: strings of the user language
+        """
         return self.__strings[self.__language]
 
-    def set_language(self, value):
+    def set_language(self, value: str):
+        """
+        This method sets language to a current state
+
+        Args:
+            value (str): language code of the user's country
+        """
         self.__language = value
 
     async def wrapped_entry(self, context, user, db):
+        # Prepare language for state
+        self.set_language(user.language)
+        # Execute state method
         status = await self.entry(context, user, db)
         # Commit changes to database
         # user.save(), db.save(), etc
@@ -75,6 +89,9 @@ class BaseState(object):
         return status
 
     async def wrapped_process(self, context, user, db):
+        # Prepare language for state
+        self.set_language(user.language)
+        # Execute state method
         status = await self.process(context, user, db)
         # Commit changes to database
         # user.save(), db.save(), etc
@@ -86,9 +103,11 @@ class BaseState(object):
             _results = await self.collect(user, context)
         return status
 
+    # Actual state method to be written for the state
     async def entry(self, context: Context, user: User, db):
         return OK
 
+    # Actual state method to be written for the state
     async def process(self, context: Context, user: User, db):
         return OK
 
@@ -97,19 +116,24 @@ class BaseState(object):
     # @Important:    But on the other hand, we can't relay on the file status
     # @Important:    for example if next call needs to upload it somewhere
     # @Important:    If you deal with reliability and consistency - great optimisation
-    async def download_by_url(self, url, folder, filename):
-        if not self.file_exists(folder):
-            os.mkdir(os.path.join(self.media_path, folder))
-        filepath = os.path.join(self.media_path, folder, filename)
+    async def download_by_url(self, url, *folders, filename):
+        # Make sure file exists
+        if not self.exists(*folders):
+            # Create folder on the path
+            os.mkdir(os.path.join(self.media_path, *folders))
+        # Full file path with filename
+        filepath = os.path.join(self.media_path, *folders, filename)
+        # Initiate aiohttp sessions, get file
         async with ClientSession() as session:
             async with session.get(url) as response:
+                # Open file with aiofiles and start steaming bytes, write to the file
                 async with aiofiles.open(filepath, 'wb') as f:
                     async for chunk in response.content.iter_any():
                         await f.write(chunk)
         return filepath
 
     # @Important: check if downloaded file exist
-    def file_exists(self, *args):
+    def exists(self, *args):
         return os.path.exists(os.path.join(self.media_path, *args))
 
     # @Important: high level access to translation module
@@ -137,13 +161,18 @@ class BaseState(object):
             del self.tasks[id(context)]
         return results
 
+    # @Important: Real send method, takes SenderTask as argument
     async def _send(self, task: SenderTask, session: ClientSession):
+        # Takes instance data holder object with the name from the tokens storage, extracts url
         url = tokens[task.user.via_instance].url
+        # Unpack context, set headers (content-type: json)
         async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
+            # If reached server - log response
             if resp.status == 200:
                 result = await resp.json()
                 logger.info(f"Sending task status: {result}")
                 return result
+            # Otherwise - log error
             else:
                 logger.info(f"[ERROR]: Sending task status {await resp.text()}")
 
