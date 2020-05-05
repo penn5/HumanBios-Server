@@ -80,7 +80,7 @@ class BasicQuestionState(base_state.BaseState):
                 # TODO: Store all users input
                 url = context['request']['files'][0]['payload']
                 # Download selfie in the user's folder
-                path = await self.download_by_url(url, f'user_{user.identity}', 'selfie.png')
+                path = await self.download_by_url(url, f'user_{user.identity}', filename='selfie.png')
                 # TODO: @Important: Serve files somehow to allow remote access via front ends
                 # TODO: @Important: Need to keep private access, so we need static files server that will
                 # TODO: @Important: create tokens and timestamps and allows time limited access to user data

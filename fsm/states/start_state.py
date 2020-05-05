@@ -29,7 +29,7 @@ class StartState(base_state.BaseState):
                     # Should be only one profile picture
                     url = context['request']['files'][0]['payload']
                     # Downloading file and getting path to the file
-                    path = await self.download_by_url(url, f'user_{user.identity}', 'profile.png')
+                    path = await self.download_by_url(url, f'user_{user.identity}', filename='profile.png')
                     # Assign value to the user picture path
                     user.profile_picture = path
         # Edit context to not have file
