@@ -1,11 +1,12 @@
+from settings import ROOT_PATH, logger, Config
 from server_logic.definitions import Context
-from settings import ROOT_PATH, logger
 from sanic.response import json
 from fsm.handler import Handler
 from settings import tokens
 from sanic import Sanic
 #import googlemaps
 import asyncio
+import secrets
 import os
 
 
@@ -68,7 +69,31 @@ async def rasa_get_facility(request):
     else:
         resp = {"facility_address_0": "<this is a dummy server response address>"}
     return json(resp)
-   
+
+
+@app.route('/api/setup', methods=['POST'])
+async def worker_setup(request):
+    # get data from request
+    data = request.json
+    # get security token from the data
+    token = data.get("security_token", "")
+    # Verify security token (of the server)
+    if token != tokens['server']:
+        return json({"status": 403, "message": "token unauthorized"})
+    # Pull url from request
+    url = data.get("url", "")
+    # Generate new token and pull url
+    if not url:
+        return json({"status": 403, "message": "url invalid"})
+    # Generate new token and name for the instance
+    new_token = secrets.token_urlsafe(40)
+    name = secrets.token_hex(10)
+    # Save data on the server
+    config_obj = Config(new_token, url)
+    tokens[name] = config_obj
+    # Return useful data back to the caller
+    return json({"name": name, "token": new_token})
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8282, log_config=None)

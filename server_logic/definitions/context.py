@@ -71,6 +71,7 @@ class Context(Serializable):
         return ValidationResult(validated, obj)
 
     def replace_security_token(self):
+        # Make sure to pass correct token
         self['request']['security_token'] = tokens['server']
 
     def to_dict(self):
