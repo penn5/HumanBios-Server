@@ -44,6 +44,9 @@ class BasicQuestionState(base_state.BaseState):
         key = ORDER.get(user.current_state)
         # Raw text alias
         raw_text: str = context['request']['message']['text']
+        # [DEBUG]:
+        # if key in ['location', 'selfie', 'coughing']:
+        #    print(key, context)
 
         # Dialog steps that require non-trivial/free input
         free_answers = ["story", "helping", "location", "selfie", "coughing"]
@@ -76,16 +79,29 @@ class BasicQuestionState(base_state.BaseState):
         else:
             # @Important: If user sends selfie - download the image
             if key == "selfie" and context['request']['has_image']:
-                # Should be only one selfie picture
-                # TODO: Store all users input
+                # TODO: Store all users input `properly`
+                for index, each_file in enumerate(context['request']['files']):
+                    url = each_file['payload']
+                    # Download selfie to the user's folder
+                    path = await self.download_by_url(url, f'user_{user.identity}', filename=f'selfie_{index}.png')
+                    # TODO: @Important: Serve files somehow to allow remote access via front ends
+                    # TODO: @Important: Need to keep private access, so we need static files server that will
+                    # TODO: @Important: create tokens and timestamps and allows time limited access to user data
+                    # Save filepath to the user's resume
+                    # If first element - set it as list, otherwise just append
+                    if not index:
+                        db[user.identity]['resume']['selfie_paths'] = [path]
+                    else:
+                        db[user.identity]['resume']['selfie_paths'].append(path)
+            # @Important: If user sends voice not of them coughing - download the note
+            elif key == "coughing" and context['request']['has_audio']:
+                # Always will be only one voice note (per message)
+                # TODO: Store all users input `properly`
                 url = context['request']['files'][0]['payload']
-                # Download selfie in the user's folder
-                path = await self.download_by_url(url, f'user_{user.identity}', filename='selfie.png')
-                # TODO: @Important: Serve files somehow to allow remote access via front ends
-                # TODO: @Important: Need to keep private access, so we need static files server that will
-                # TODO: @Important: create tokens and timestamps and allows time limited access to user data
+                # Download voice note to the user's folder
+                path = await self.download_by_url(url, f'user_{user.identity}', filename='coughing.mp3')
                 # Save filepath to the user's resume
-                db[user.identity]['resume']['selfie_path'] = path
+                db[user.identity]['resume']['cough_path'] = path
             # @Important: bad value fallback
             else:
                 # Set of buttons, according user's language
