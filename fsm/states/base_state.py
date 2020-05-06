@@ -53,7 +53,7 @@ class BaseState(object):
     # Prepare state
     def __init__(self):
         # Keeps list of tasks
-        self.tasks = set()
+        self.tasks = list()
         # Create language variable
         self.__language = 'en'
 
@@ -186,4 +186,4 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
-        self.tasks.add(SenderTask(to_user, context.deepcopy()))
+        self.tasks.append(SenderTask(to_user, context.deepcopy()))
