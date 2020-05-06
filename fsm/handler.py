@@ -26,9 +26,9 @@ class Handler(object):
         if state is None:
             # If non-existing state - send user to the start state
             # @Important: Don't forget to initialize the state
-            return False, self.__states[self.__start_state].__init__(), self.__start_state
+            return False, self.__states[self.__start_state](), self.__start_state
         # @Important: Don't forget to initialize the state
-        return True, state.__init__(), name
+        return True, state(), name
 
     async def __get_or_register_user(self, context):
         # Using dummy db for now

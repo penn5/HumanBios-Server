@@ -241,7 +241,7 @@ class BasicQuestionState(base_state.BaseState):
                 "text": key,
                 "value": f"lang_{key}"
             }
-            for key in self.languages
+            for key in self.LANGUAGES
         ]
 
     # @Important: shortcut method for few actions
