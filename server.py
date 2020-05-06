@@ -20,7 +20,7 @@ async def data_handler(request):
     # get data from request
     data = request.json
     if data is None:
-        return json({"status": 403, "message": "token unauthorized"})
+        return json({"status": 403, "message": "expected json"})
 
     token = tokens.get(data.get('via_instance'), '')
     # `not token` to avoid `'' == ''`

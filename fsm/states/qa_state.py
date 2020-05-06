@@ -1,4 +1,4 @@
-from strings.qa_module import get_next_question
+from strings.qa_module import get_next_question, get_user_scores
 from db_models import ServiceTypes
 from . import base_state
 
@@ -11,7 +11,8 @@ class QAState(base_state.BaseState):
         # Create qa storage
         db[user.identity]['qa'] = {
             'q': question,
-            'qa_results': {}
+            'qa_results': {},
+            'score': 0
         }
         # Easy method to prepare context for question
         self.set_data(context, question)
@@ -24,7 +25,9 @@ class QAState(base_state.BaseState):
         curr_q = db[user.identity]['qa']['q']
         # Alias for text answer
         raw_answer = context['request']['message']['text']
-
+        # Save current score
+        db[user.identity]['qa']['score'] = get_user_scores(user.identity)
+        # print(db[user.identity]['qa']['score'])
         # Handle edge buttons
         # If `stop` button -> kill dialog
         if raw_answer == self.strings['stop']:

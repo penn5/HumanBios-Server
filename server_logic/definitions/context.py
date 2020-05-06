@@ -53,7 +53,7 @@ class Context(Serializable):
         validated = True
         try:
             # TODO: Disallow unfeatured properties?
-            # TODO: Or it will be too resource-consuming
+            # TODO: Or it will be too resource-consuming?
             Validator.validate(json_ish)
             error = False
         except ValidationError as e:

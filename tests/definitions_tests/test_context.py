@@ -32,10 +32,10 @@ def test_context_from_json_declined(correct_source_and_data):
     data5 = (correct_source_and_data[0], )
 
     result1 = Context.from_json(data1)
-    result2 = Context.from_json(data1)
-    result3 = Context.from_json(data1)
-    result4 = Context.from_json(data1)
-    result5 = Context.from_json(data1)
+    result2 = Context.from_json(data2)
+    result3 = Context.from_json(data3)
+    result4 = Context.from_json(data4)
+    result5 = Context.from_json(data5)
 
     assert result1.validated is False
     assert result2.validated is False
