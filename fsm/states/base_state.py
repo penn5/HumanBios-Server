@@ -176,7 +176,7 @@ class BaseState(object):
                 return result
             # Otherwise - log error
             else:
-                logger.info(f"[ERROR]: Sending task status {await resp.text()}")
+                logger.info(f"[ERROR]: Sending task ({task}) status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
