@@ -33,8 +33,7 @@ async def data_handler(request):
     # verify context `required` attributes
     if not result.validated:
         # add custom 403 error code
-        # TODO: Describe which fields were unvalidated
-        return json({"status": 403, "message": "invalid"})
+        return json({"status": 403, "message": result.error})
     # Validated object
     ctx = result.object
     # Replace security token to the server's after validation

@@ -44,7 +44,7 @@ SCHEMA = load(os.path.join(ROOT_PATH, 'server_logic', 'schema.json'))
 # Validator with defaults
 DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 Validator = DefaultValidatingDraft7Validator(schema=SCHEMA)
-ValidationResult = namedtuple("ValidationResult", ["validated", "object"])
+ValidationResult = namedtuple("ValidationResult", ["validated", "object", "error"])
 
 
 class Context(Serializable):
@@ -55,8 +55,10 @@ class Context(Serializable):
             # TODO: Disallow unfeatured properties?
             # TODO: Or it will be too resource-consuming
             Validator.validate(json_ish)
+            error = False
         except ValidationError as e:
             validated = False
+            error = e.message
         if validated:
             obj = cls()
             # Set request value
@@ -68,7 +70,7 @@ class Context(Serializable):
                                                  )
         else:
             obj = None
-        return ValidationResult(validated, obj)
+        return ValidationResult(validated, obj, error)
 
     def replace_security_token(self):
         # Make sure to pass correct token
