@@ -17,6 +17,7 @@
 * type: `int` (MEDIC, SOCIAL, PATIENT)
 * created_at: `datetime`
 * last_location: `str` (coordinates)
+* last_active: `datetime`
 
 ## Resume
 * answers: `Answer`
@@ -43,3 +44,8 @@
 * type: `int` (MEDICAL, SOCIAL, COMMON)
 * created_at: `datetime`
 * resolved_at: `datetime`
+
+## ScheduledCheckBack
+* user: `User`
+* context: `Blob`
+* send_at: `datetime`
