@@ -73,13 +73,16 @@ class QAState(base_state.BaseState):
         next_q = get_next_question(user.identity, user.language, next_q_id)
         # Set next question
         db[user.identity]['qa']['q'] = next_q
-        # If next question exists -> prepare data
-        if next_q:
-            self.set_data(context, next_q)
-        # else, all qa path finished -> go back to the basic questions
-        else:
+        # If next question is a string, its the final recommendation. we will send it out then switch
+        if isinstance(next_q, str):
+            context['request']['message']['text'] = next_q
+            context['request']['has_buttons'] = False
+            self.send(user, context)
             user.current_state = 10
             return base_state.GO_TO_STATE("BasicQuestionState")
+        # else next question exists -> prepare data
+        else:
+            self.set_data(context, next_q)
         # Send message
         self.send(user, context)
         return base_state.OK
