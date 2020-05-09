@@ -44,3 +44,8 @@ $ aws dynamodb list-tables --endpoint-url http://localhost:8000
 ```
 $ aws dynamodb delete-table --table-name <table_name>
 ```
+
+#### Docker build
+```
+$ docker build -t humanbios-server .
+```
