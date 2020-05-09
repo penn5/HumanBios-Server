@@ -13,7 +13,7 @@ multidict==4.7.5
 rfc3986==1.4.0
 sanic==19.12.2
 sniffio==1.1.0
-ujson==1.35
+ujson
 uvloop==0.14.0
 websockets==8.1
 networkx>=2.4
@@ -23,8 +23,11 @@ PyJWT>=1.7.1
 requests>=2.23.0
 PyYAML>=5.3.1
 jsonschema>=3.2.0
+<<<<<<< HEAD
 boto3>=1.13.5
 awscli
 pytest>=5.4.1
 pytz>=2019.3
 botocore>=1.16.5
+=======
+>>>>>>> 2849c9f7a42f36a47987ded2bd1db0c63d3c7037
