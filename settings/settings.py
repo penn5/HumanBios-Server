@@ -7,3 +7,5 @@ ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 SERVER_SECURITY_TOKEN = os.environ['SERVER_SECURITY_TOKEN']
 
 CLOUD_TRANSLATION_API_KEY = os.environ['CLOUD_TRANSLATION_API_KEY']
+
+DATABASE_URL = os.environ['DATABASE_URL']

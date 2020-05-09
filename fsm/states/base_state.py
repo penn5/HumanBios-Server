@@ -1,4 +1,3 @@
-from db_models.conversations import ConversationDispatcher
 from server_logic.definitions import Context, SenderTask
 from settings import tokens, logger, ROOT_PATH
 from translation import Translator
@@ -7,6 +6,7 @@ from strings import strings_text
 from db_models import User
 import aiofiles
 import asyncio
+import boto3
 import os
 
 
@@ -47,9 +47,6 @@ class BaseState(object):
     if not os.path.exists(media_path):
         os.mkdir(media_path)
 
-    # @Important: instantiate conversations broker
-    convo_broker = ConversationDispatcher()
-
     # Prepare state
     def __init__(self):
         # Keeps list of tasks
@@ -77,13 +74,16 @@ class BaseState(object):
         """
         self.__language = value or "en"
 
-    async def wrapped_entry(self, context, user, db):
+    async def wrapped_entry(self, context: Context, user: User, db):
         # Prepare language for state
-        self.set_language(user.language)
+        self.set_language(user['language'])
         # Execute state method
         status = await self.entry(context, user, db)
         # Commit changes to database
-        # user.save(), db.save(), etc
+        # TODO: @Important: Add `commit` variable to the status class -> and if don't want to commit
+        # TODO: @Important: just set `OK(commit=False)` when returning status
+        # if status.commit:
+        await db.commit_user(Item=user)
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
@@ -92,13 +92,16 @@ class BaseState(object):
             _results = await self.collect(user, context)
         return status
 
-    async def wrapped_process(self, context, user, db):
+    async def wrapped_process(self, context: Context, user: User, db):
         # Prepare language for state
-        self.set_language(user.language)
+        self.set_language(user['language'])
         # Execute state method
         status = await self.process(context, user, db)
         # Commit changes to database
-        # user.save(), db.save(), etc
+        # TODO: @Important: Add `commit` variable to the status class -> and if don't want to commit
+        # TODO: @Important: just set `OK(commit=False)` when returning status
+        # if status.commit:
+        await db.commit_user(Item=user)
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
@@ -166,7 +169,7 @@ class BaseState(object):
     # @Important: Real send method, takes SenderTask as argument
     async def _send(self, task: SenderTask, session: ClientSession):
         # Takes instance data holder object with the name from the tokens storage, extracts url
-        url = tokens[task.user.via_instance].url
+        url = tokens[task.user['via_instance'].url]
         # Unpack context, set headers (content-type: json)
         async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
             # If reached server - log response

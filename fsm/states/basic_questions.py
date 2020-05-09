@@ -19,7 +19,7 @@ class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
         # If returning to the state from somewhere, with current_state -> continue
-        if user.current_state == 10:
+        if db.get_state(user) == 10:
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
             context['request']['has_buttons'] = False
@@ -28,9 +28,7 @@ class BasicQuestionState(base_state.BaseState):
             return base_state.OK
         else:
             # @Important: Default starting state
-            user.current_state = 1
-            # @TMP: initiate resume, to record user answers
-            db[user.identity]['resume'] = {}
+            db.set_state(user, 1)
             # Send language message
             context['request']['message']['text'] = self.strings["choose_lang"]
             context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
@@ -41,7 +39,7 @@ class BasicQuestionState(base_state.BaseState):
 
     async def process(self, context, user: User, db):
         # Take key associated with state
-        key = ORDER.get(user.current_state)
+        key = ORDER.get(db.get_state(user))
         # Raw text alias
         raw_text: str = context['request']['message']['text']
         # [DEBUG]:
@@ -71,10 +69,10 @@ class BasicQuestionState(base_state.BaseState):
                 return base_state.OK
             else:
                 # If legit language -> save language to the user
-                user.language = language
+                user['language'] = language
                 # @Important: And set current context to the new language
                 # @Important: (Will be done automatically with the next event)
-                self.set_language(user.language)
+                self.set_language(user['language'])
         # Recording the answers, if skipped first two steps
         else:
             # @Important: If user sends selfie - download the image
@@ -83,25 +81,25 @@ class BasicQuestionState(base_state.BaseState):
                 for index, each_file in enumerate(context['request']['files']):
                     url = each_file['payload']
                     # Download selfie to the user's folder
-                    path = await self.download_by_url(url, f'user_{user.identity}', filename=f'selfie_{index}.png')
+                    path = await self.download_by_url(url, f"'user_{user['identity']}'", filename=f'selfie_{index}.png')
                     # TODO: @Important: Serve files somehow to allow remote access via front ends
                     # TODO: @Important: Need to keep private access, so we need static files server that will
                     # TODO: @Important: create tokens and timestamps and allows time limited access to user data
                     # Save filepath to the user's resume
                     # If first element - set it as list, otherwise just append
                     if not index:
-                        db[user.identity]['resume']['selfie_paths'] = [path]
+                        user['files']['selfie'] = [path]
                     else:
-                        db[user.identity]['resume']['selfie_paths'].append(path)
+                        user['files']['selfie'].append(path)
             # @Important: If user sends voice not of them coughing - download the note
             elif key == "coughing" and context['request']['has_audio']:
                 # Always will be only one voice note (per message)
                 # TODO: Store all users input `properly`
                 url = context['request']['files'][0]['payload']
                 # Download voice note to the user's folder
-                path = await self.download_by_url(url, f'user_{user.identity}', filename='coughing.mp3')
+                path = await self.download_by_url(url, f"user_{user['identity']}", filename='coughing.mp3')
                 # Save filepath to the user's resume
-                db[user.identity]['resume']['cough_path'] = path
+                user['files']['cough_path'] = path
             # @Important: bad value fallback
             else:
                 # Set of buttons, according user's language
@@ -124,11 +122,11 @@ class BasicQuestionState(base_state.BaseState):
                     # TODO: Make sure to download links etc
                     # If current question is `location` -> save to the user data
                     if key == 'location':
-                        user.last_location = raw_text
+                        user['last_location'] = raw_text
                     # Else record answer as a simple text
                     else:
                         # Record answer to the question
-                        db[user.identity]['resume'][key] = context['request']['message']['text']
+                        user['answers'][key] = context['request']['message']['text']
 
         # Conversation killers / Key points
         # Bonus value to skip one state
@@ -143,9 +141,9 @@ class BasicQuestionState(base_state.BaseState):
             context['request']['message']['text'] = self.strings["end_convo"]
             self.send(user, context)
             # Reset the flow
-            user.current_state = None
+            db.set_state(user, 1)
             # Clear list of states related to the user
-            db[user.identity]['states'].clear()
+            user['states'] = ["StartState"]
             return base_state.OK
         # if not medical -> jump to `stressed` question
         elif key == "medical" and raw_text == self.strings['no']:
@@ -157,10 +155,10 @@ class BasicQuestionState(base_state.BaseState):
         # @Important: create social request
         elif key == "mental" and raw_text == self.strings['yes']:
             #donotrepeatyourcode
-            return self.request_method(context, user, user.types.SOCIAL, "forward_shrink")
+            return self.request_method(context, user, db.types.SOCIAL, "forward_shrink")
         # @Important: if coughing (last state) -> request doctor conversation
         elif key == "coughing":
-            return self.request_method(context, user, user.types.MEDIC, "forward_doctor")
+            return self.request_method(context, user, db.types.MEDIC, "forward_doctor")
         elif key == "helping" and raw_text == self.strings['yes']:
             # TODO: Is not implemented yet
             return base_state.GO_TO_STATE("AFKState")
@@ -170,10 +168,10 @@ class BasicQuestionState(base_state.BaseState):
             # Ensure jump from `location` -> `covapp QA`
             if key == "QA_TRIGGER":
                 # Set to the qa state
-                user.current_state = 5
+                db.set_state(user, 5)
             else:
                 # else go one step back
-                user.current_state -= 1
+                db.change_state(user, -1)
         # Stop button
         elif raw_text == self.strings['stop']:
             # Jump from current state to final `end` state
@@ -181,10 +179,10 @@ class BasicQuestionState(base_state.BaseState):
         # TODO: Add conditional `skip` button
         else:
             # Update current state
-            user.current_state += 1 + bonus_value
+            db.change_state(user, 1 + bonus_value)
 
         # Update current key
-        key = ORDER.get(user.current_state)
+        key = ORDER.get(db.get_state(user))
         # Get button type and yes/no/back keyboard
         btn_type, buttons = self.simple_keyboard()
         # If key is in the free answers -> remove keyboard
@@ -245,9 +243,10 @@ class BasicQuestionState(base_state.BaseState):
         ]
 
     # @Important: shortcut method for few actions
-    def request_method(self, context, user: User, type_: User.types, forward_name: str):
+    def request_method(self, context, user: User, type_, forward_name: str):
         # request created
-        self.convo_broker.request_conversation(user, user.types.SOCIAL)
+        # TODO: fix
+        #  self.convo_broker.request_conversation(user, type_)
         # Send user message, that the request was created
         context['request']['message']['text'] = self.strings[forward_name]
         self.send(user, context)

@@ -9,7 +9,7 @@ class AFKState(base_state.BaseState):
     # TODO: @TMP: This method probably shouldn't be here when everything else works properly (AKA On Release)
     async def process(self, context: Context, user: User, db):
         # Reset the flow
-        user.current_state = None
-        # Clear list of states related to the user
-        db[user.identity]['states'].clear()
+        db.current_states[user['identity']] = None
+        # Set user to the start state
+        user['states'] = ["StartState"]
         return base_state.OK

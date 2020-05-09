@@ -15,6 +15,6 @@ class ENDState(base_state.BaseState):
         # Reset the flow
         user.current_state = None
         # Clear list of states related to the user
-        db[user.identity]['states'].clear()
+        user['states'] = ['StartState']
         # The next message from user will trigger StartState
         return base_state.OK
