@@ -30,10 +30,14 @@ Pull database image
 ```
 $ docker pull amazon/dynamodb-local
 ```
-
 Run database image
 ```
 $ cd db_models
+$ docker-compose up -d
+```
+#### Run server
+```
+$ cd ..
 $ docker-compose up -d
 ```
 
