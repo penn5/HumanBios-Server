@@ -1,6 +1,8 @@
 from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional
+from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+from .create_db import create_db
 from .enums import AccountType
 import datetime
 import boto3
@@ -21,8 +23,12 @@ class DataBase:
         self.dynamodb = boto3.resource(
             'dynamodb',
             region_name=region_name,
-            endpoint_url=database_url
+            endpoint_url=database_url,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY
         )
+        # Create db tables
+        create_db(self.dynamodb)
         self.Users = self.dynamodb.Table('Users')
         self.Conversations = self.dynamodb.Table('Conversations')
         self.ConversationRequests = self.dynamodb.Table('ConversationRequests')
@@ -56,6 +62,9 @@ class DataBase:
             # Print Error Message and return None
             print(e.response['Error']['Message'])
         else:
+            # If not exist -> return None
+            if not response.get('Item'):
+                return
             # Return just item
             return response['Item']
 
@@ -68,13 +77,16 @@ class DataBase:
             ExpressionAttributeValues=values,
             ReturnValues="UPDATED_NEW"
         )
-        return response
+        # This is.. uh
+        for key, new_value in response['Attributes'].items():
+            user[key] = new_value  # ignore warning
+        return user
 
     async def commit_user(self, user: User):
         self.Users.put_item(Item=user)
 
     def get_state(self, user: User):
-        return self.current_states.get(user['identity'])
+        return self.current_states.get(user['identity'], 1)
 
     def set_state(self, user: User, state: int):
         self.current_states[user['identity']] = state

@@ -1,17 +1,45 @@
 # HumanBios Server
 
-## Setup
-#### Python (3.7+)
+## Prerequisites
+`docker`, `docker-compose`, `python3.7`|`python3.8+`  
+
+## Production
+#### Get code
 ```
-$ python -m venv .venv
-$ source .venv/bin/activate
-$ python -m pip install -r requirements.txt
+$ git clone git@github.com:HumanbiOS/HumanBios-Server.git
 ```
-#### Update modules
+or
+```
+$ git clone https://github.com/HumanbiOS/HumanBios-Server.git
+```
+#### Update submodules
 ```
 $ git submodule update --init --recursive
 ```
+#### Setup .env
+```
+$ cp .env.example .env  
+```
+**Fill `.env`**  
+#### Build container
+```
+$ docker build -t humanbios-server .
+```
 #### Database
+Pull database image
+```
+$ docker pull amazon/dynamodb-local
+```
+
+Run database image
+```
+$ cd db_models
+$ docker-compose up -d
+```
+
+## Development (Not Dokerized)
+# Soon..
+"""
 First configure aws  
 **Important:** DynamoDB needs aws config even for local use, so we can just fill it with dummy data  
 ```
@@ -21,20 +49,7 @@ AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 Default region name [None]: us-west-2
 Default output format [None]: json
 ```
-Make & launch db
-```
-$ mkdir db-build
-$ cd db-build
-$ curl -O https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_latest.zip
-$ unzip dynamodb_local_latest.zip
-$ rm dynamodb_local_latest.zip
-$ nohup java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb &
-$ echo $! > save_pid.txt
-```
-Prepare database (Create tables)
-```
-$ python -m db_models
-```
+
 Verify database 
 ```
 $ aws dynamodb list-tables --endpoint-url http://localhost:8000

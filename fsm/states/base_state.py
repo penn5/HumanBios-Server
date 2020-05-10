@@ -12,6 +12,10 @@ import os
 
 class OK:
     status = 1
+    commit = True
+
+    def __init__(self, commit=True):
+        self.commit = commit
 
     def __eq__(self, other):
         return self.status == other.status
@@ -20,9 +24,11 @@ class OK:
 class GO_TO_STATE:
     status = 2
     next_state = None
+    commit = True
 
-    def __init__(self, next_state):
+    def __init__(self, next_state, commit=True):
         self.next_state = next_state
+        self.commit = commit
 
     def __eq__(self, other):
         return self.status == other.status
@@ -35,6 +41,9 @@ class BaseState(object):
     # This variable allows to ignore `entry()` when needed
     has_entry = True
     # All translations
+    # TODO: Rework it so only cache and request new translation (from en) when needed
+    #       this will allow us to eventually use rasa for language recognition
+    #       with google language detection to provide the best language choice experience
     __STRINGS = strings_text
     # ALL languages
     LANGUAGES = strings_text.keys()
@@ -80,10 +89,8 @@ class BaseState(object):
         # Execute state method
         status = await self.entry(context, user, db)
         # Commit changes to database
-        # TODO: @Important: Add `commit` variable to the status class -> and if don't want to commit
-        # TODO: @Important: just set `OK(commit=False)` when returning status
-        # if status.commit:
-        await db.commit_user(Item=user)
+        if status.commit:
+            await db.commit_user(user=user)
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
@@ -98,10 +105,8 @@ class BaseState(object):
         # Execute state method
         status = await self.process(context, user, db)
         # Commit changes to database
-        # TODO: @Important: Add `commit` variable to the status class -> and if don't want to commit
-        # TODO: @Important: just set `OK(commit=False)` when returning status
-        # if status.commit:
-        await db.commit_user(Item=user)
+        if status.commit:
+            await db.commit_user(user=user)
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
@@ -169,7 +174,7 @@ class BaseState(object):
     # @Important: Real send method, takes SenderTask as argument
     async def _send(self, task: SenderTask, session: ClientSession):
         # Takes instance data holder object with the name from the tokens storage, extracts url
-        url = tokens[task.user['via_instance'].url]
+        url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
         async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
             # If reached server - log response
@@ -184,7 +189,7 @@ class BaseState(object):
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
         # @Important: [Explanation to the code below]:
-        # @Important: maybe add some queue of coroutines and dispatch them all when handler return OK (?)
+        # @Important: maybe add some queue of coroutines and dispatch them all when handler return status (?)
         # @Important: or just dispatch them via asyncio.create_task so it will be more efficient (?)
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3

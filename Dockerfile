@@ -20,5 +20,5 @@ RUN apk --no-cache add lapack libstdc++ git postgresql-libs \
  && pip3 install --upgrade pip wheel \
  && pip3 install -r requirements.txt \
  && apk del .build-deps
-
+# Launch
 CMD python3 ./server.py

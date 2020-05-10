@@ -35,22 +35,24 @@ class Handler(object):
         # Getting user from database
         user = await self.db.get_user(context['request']['user']['identity'])
         if user is None:
-            user = User(user_id=context['request']['user']['user_id'],
-                        service=context['request']['service_in'],
-                        identity=context['request']['user']['identity'],
-                        via_instance=context['request']['via_instance'],
-                        first_name=context['request']['user']['first_name'],
-                        last_name=context['request']['user']['last_name'],
-                        username=context['request']['user']['username'],
-                        language='en',
-                        type=self.db.types.COMMON,
-                        created_at=self.db.now().isoformat(),
-                        last_location=None,
-                        last_active=self.db.now().isoformat(),
-                        conversation_id=None,
-                        answers=dict(),
-                        files=dict(),
-                        states=list())
+            user = {
+                        "user_id": context['request']['user']['user_id'],
+                        "service": context['request']['service_in'],
+                        "identity": context['request']['user']['identity'],
+                        "via_instance": context['request']['via_instance'],
+                        "first_name": context['request']['user']['first_name'],
+                        "last_name": context['request']['user']['last_name'],
+                        "username": context['request']['user']['username'],
+                        "language": 'en',
+                        "type": self.db.types.COMMON,
+                        "created_at": self.db.now().isoformat(),
+                        "last_location": None,
+                        "last_active": self.db.now().isoformat(),
+                        "conversation_id": None,
+                        "answers": dict(),
+                        "files": dict(),
+                        "states": list()
+                    }
             await self.db.create_user(user)
 
         await self.__register_event(user)
