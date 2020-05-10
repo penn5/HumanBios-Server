@@ -78,7 +78,7 @@ class DataBase:
             ExpressionAttributeValues=values,
             ReturnValues="UPDATED_NEW"
         )
-        return response
+        return response['Item']
 
     async def commit_user(self, user: User):
         self.Users.put_item(Item=user)
