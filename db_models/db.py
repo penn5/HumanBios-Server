@@ -80,7 +80,7 @@ class DataBase:
         self.Users.put_item(Item=user)
 
     def get_state(self, user: User):
-        return self.current_states.get(user['identity'])
+        return self.current_states.get(user['identity'], 1)
 
     def set_state(self, user: User, state: int):
         self.current_states[user['identity']] = state
