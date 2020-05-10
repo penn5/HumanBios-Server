@@ -83,7 +83,7 @@ class BaseState(object):
         # TODO: @Important: Add `commit` variable to the status class -> and if don't want to commit
         # TODO: @Important: just set `OK(commit=False)` when returning status
         # if status.commit:
-        await db.commit_user(Item=user)
+        await db.commit_user(user=user)
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
@@ -101,7 +101,7 @@ class BaseState(object):
         # TODO: @Important: Add `commit` variable to the status class -> and if don't want to commit
         # TODO: @Important: just set `OK(commit=False)` when returning status
         # if status.commit:
-        await db.commit_user(Item=user)
+        await db.commit_user(user=user)
 
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
