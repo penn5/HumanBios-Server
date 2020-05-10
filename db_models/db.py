@@ -62,6 +62,10 @@ class DataBase:
             # Print Error Message and return None
             print(e.response['Error']['Message'])
         else:
+            # If not exist -> return None
+            if not response.get('Item'):
+                print(response)
+                return
             # Return just item
             return response['Item']
 
