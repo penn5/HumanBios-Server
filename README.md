@@ -29,10 +29,24 @@ Run database image
 ```
 docker run -p 8000:8000 amazon/dynamodb-local
 ```
-Prepare database (Create tables)
+Database image `docker-compose.yml`:
 ```
-$ python -m db_models
+version: "3.7"
+
+services:
+  dynamodb:
+    container_name: dynamodb-local
+    image: amazon/dynamodb-local
+    restart: unless-stopped
+    ports:
+     - 8000:8000
+
+networks:
+  default:
+    external:
+      name: caddynet
 ```
+
 Verify database 
 ```
 $ aws dynamodb list-tables --endpoint-url http://localhost:8000
