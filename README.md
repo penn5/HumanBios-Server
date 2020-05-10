@@ -21,15 +21,13 @@ AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 Default region name [None]: us-west-2
 Default output format [None]: json
 ```
-Make & launch db
+Pull database image
 ```
-$ mkdir db-build
-$ cd db-build
-$ curl -O https://s3-us-west-2.amazonaws.com/dynamodb-local/dynamodb_local_latest.zip
-$ unzip dynamodb_local_latest.zip
-$ rm dynamodb_local_latest.zip
-$ nohup java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb &
-$ echo $! > save_pid.txt
+docker pull amazon/dynamodb-local
+```
+Run database image
+```
+docker run -p 8000:8000 amazon/dynamodb-local
 ```
 Prepare database (Create tables)
 ```
