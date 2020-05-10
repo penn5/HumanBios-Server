@@ -169,7 +169,7 @@ class BaseState(object):
     # @Important: Real send method, takes SenderTask as argument
     async def _send(self, task: SenderTask, session: ClientSession):
         # Takes instance data holder object with the name from the tokens storage, extracts url
-        url = tokens[task.user['via_instance'].url]
+        url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
         async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
             # If reached server - log response
