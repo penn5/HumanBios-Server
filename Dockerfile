@@ -20,7 +20,5 @@ RUN apk --no-cache add lapack libstdc++ git postgresql-libs \
  && pip3 install --upgrade pip wheel \
  && cat requirements.txt | xargs -n 1 pip3 install \
  && apk del .build-deps
-# Create db
-CMD python3 -m db_models
 # Launch
 CMD python3 ./server.py
