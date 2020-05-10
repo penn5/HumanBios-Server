@@ -31,16 +31,16 @@ $ rm dynamodb_local_latest.zip
 $ nohup java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb &
 $ echo $! > save_pid.txt
 ```
-Create tables
+Prepare database (Create tables)
 ```
 $ python -m db_models
 ```
-Verify tables
+Verify database 
 ```
 $ aws dynamodb list-tables --endpoint-url http://localhost:8000
 ```
 
-[Optional] Deleting tables
+[Info] Deleting tables
 ```
 $ aws dynamodb delete-table --table-name <table_name>
 ```
