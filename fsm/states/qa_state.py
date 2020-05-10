@@ -11,7 +11,7 @@ class QAState(base_state.BaseState):
         question = get_next_question(user['identity'], user['language'])
         # Create qa storage
         user['answers']['qa'] = {
-            'q': question,
+            'q': question.id,
             'qa_results': {},
             'score': 0
         }
@@ -21,9 +21,9 @@ class QAState(base_state.BaseState):
         self.send(user, context)
         return base_state.OK
 
-    async def process(self, context, user, db):
+    async def process(self, context: Context, user: User, db):
         # Get saved current question
-        curr_q = user['answers']['qa']['q']
+        curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'])
         # Alias for text answer
         raw_answer = context['request']['message']['text']
         # Save current score
@@ -73,7 +73,7 @@ class QAState(base_state.BaseState):
         # Get next question via qa_module method
         next_q = get_next_question(user['identity'], user['language'], next_q_id)
         # Set next question
-        user['answers']['qa']['q'] = next_q
+        user['answers']['qa']['q'] = next_q.id
         # If next question is a string, its the final recommendation. we will send it out then switch
         if isinstance(next_q, str):
             context['request']['message']['text'] = next_q
