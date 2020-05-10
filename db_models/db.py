@@ -64,7 +64,6 @@ class DataBase:
         else:
             # If not exist -> return None
             if not response.get('Item'):
-                print(response)
                 return
             # Return just item
             return response['Item']

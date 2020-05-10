@@ -18,7 +18,7 @@ $ git submodule update --init --recursive
 ```
 #### Setup .env
 ```
-cp .env.example .env  
+$ cp .env.example .env  
 ```
 **Fill `.env`**  
 #### Build container
