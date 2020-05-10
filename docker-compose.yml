@@ -7,8 +7,6 @@ services:
     restart: unless-stopped
     ports:
     - 8282:8282
-    volumes:
-      $HOME/.aws/credentials:/home/app/.aws/credentials:ro
 
 networks:
   default:

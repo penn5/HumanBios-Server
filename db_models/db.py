@@ -1,4 +1,5 @@
 from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional
+from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 from .enums import AccountType
@@ -21,7 +22,9 @@ class DataBase:
         self.dynamodb = boto3.resource(
             'dynamodb',
             region_name=region_name,
-            endpoint_url=database_url
+            endpoint_url=database_url,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY
         )
         self.Users = self.dynamodb.Table('Users')
         self.Conversations = self.dynamodb.Table('Conversations')
