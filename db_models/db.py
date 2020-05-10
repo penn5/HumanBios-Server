@@ -2,6 +2,7 @@ from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Op
 from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
+from .create_db import create_db
 from .enums import AccountType
 import datetime
 import boto3
@@ -26,6 +27,8 @@ class DataBase:
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY
         )
+        # Create db tables
+        create_db(self.dynamodb)
         self.Users = self.dynamodb.Table('Users')
         self.Conversations = self.dynamodb.Table('Conversations')
         self.ConversationRequests = self.dynamodb.Table('ConversationRequests')
