@@ -189,7 +189,7 @@ class BaseState(object):
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
         # @Important: [Explanation to the code below]:
-        # @Important: maybe add some queue of coroutines and dispatch them all when handler return OK (?)
+        # @Important: maybe add some queue of coroutines and dispatch them all when handler return status (?)
         # @Important: or just dispatch them via asyncio.create_task so it will be more efficient (?)
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
