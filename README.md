@@ -71,10 +71,16 @@ Run database image
 $ cd docker/db
 $ docker-compose up -d
 ```
-#### Run server
+#### Setup Python / Run server
 (return to the root dir of the project)
 ```
 $ cd ../..
+```
+setup python
+```
+$ python -m venv .venv
+$ source .venv/bin/python
+$ python -m pip install wheel && python -m pip install -r requirements.txt
 ```
 start app
 ```
