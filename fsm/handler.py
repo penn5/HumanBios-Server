@@ -55,6 +55,15 @@ class Handler(object):
                     }
             await self.db.create_user(user)
 
+        # @Important: Dynamically update associated service instance, when it was changed
+        if context['request']['via_instance'] != user["via_instance"]:
+            # Update database
+            user = await self.db.update_user(
+                user,
+                "SET via_instance = :v",
+                {":v": user["via_instance"]}
+            )
+
         await self.__register_event(user)
         return user
 

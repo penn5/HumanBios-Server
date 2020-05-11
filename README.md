@@ -80,3 +80,6 @@ start app
 ```
 $ python server.py
 ```
+
+## Update
+**Note: currently front ends names and tokens are kept in memory, so when you reload server or front end instance, you need to restart everything**
