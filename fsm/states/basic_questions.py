@@ -19,7 +19,7 @@ class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
         # If returning to the state from somewhere, with current_state -> continue
-        if user['context']['bq_state'] == 10:
+        if user['context'].get("bq_state") == 10:
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
             context['request']['has_buttons'] = False
