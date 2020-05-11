@@ -76,11 +76,19 @@ $ docker-compose up -d
 ```
 $ cd ../..
 ```
+upgrade pip
+```
+$ python -m pip install --upgrade pip
+```
+install utils
+```
+$ python -m pip install --upgrade virtualenv wheel
+```
 setup python
 ```
 $ python -m venv .venv
 $ source .venv/bin/python
-$ python -m pip install --upgrade pip wheel && python -m pip install -r requirements.txt
+$ python -m pip install -r requirements.txt
 ```
 start app
 ```
