@@ -72,8 +72,6 @@ class QAState(base_state.BaseState):
 
         # Get next question via qa_module method
         next_q = get_next_question(user['identity'], user['language'], next_q_id)
-        # Set next question
-        user['answers']['qa']['q'] = next_q.id
         # If next question is a string, its the final recommendation. we will send it out then switch
         if isinstance(next_q, str):
             context['request']['message']['text'] = next_q
@@ -83,6 +81,8 @@ class QAState(base_state.BaseState):
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:
+            # Set next question
+            user['answers']['qa']['q'] = next_q.id
             self.set_data(context, next_q)
         # Send message
         self.send(user, context)
