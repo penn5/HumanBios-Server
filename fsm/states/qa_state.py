@@ -1,16 +1,17 @@
+from server_logic.definitions import Context
 from strings.qa_module import get_next_question, get_user_scores
-from db_models import ServiceTypes
+from db_models import ServiceTypes, User
 from . import base_state
 
 
 class QAState(base_state.BaseState):
 
-    async def entry(self, context, user, db):
+    async def entry(self, context: Context, user: User, db):
         # Get the first question
-        question = get_next_question(user.identity, user.language)
+        question = get_next_question(user['identity'], user['language'])
         # Create qa storage
-        db[user.identity]['qa'] = {
-            'q': question,
+        user['answers']['qa'] = {
+            'q': question.id,
             'qa_results': {},
             'score': 0
         }
@@ -20,14 +21,14 @@ class QAState(base_state.BaseState):
         self.send(user, context)
         return base_state.OK
 
-    async def process(self, context, user, db):
+    async def process(self, context: Context, user: User, db):
         # Get saved current question
-        curr_q = db[user.identity]['qa']['q']
+        curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'])
         # Alias for text answer
         raw_answer = context['request']['message']['text']
         # Save current score
-        db[user.identity]['qa']['score'] = get_user_scores(user.identity)
-        # print(db[user.identity]['qa']['score'])
+        user['answers']['qa']['score'] = get_user_scores(user['identity'])
+        # print(user['answers']['qa']['score'])
         # Handle edge buttons
         # If `stop` button -> kill dialog
         if raw_answer == self.strings['stop']:
@@ -56,7 +57,7 @@ class QAState(base_state.BaseState):
             self.send(user, context)
             return base_state.OK
         # Record the answer
-        db[user.identity]['qa']['qa_results'][curr_q.id] = raw_answer
+        user['answers']['qa']['qa_results'][curr_q.id] = raw_answer
         # Find next question
         next_q_id = None
 
@@ -70,17 +71,17 @@ class QAState(base_state.BaseState):
             next_q_id = curr_q.answers[raw_answer]
 
         # Get next question via qa_module method
-        next_q = get_next_question(user.identity, user.language, next_q_id)
+        next_q = get_next_question(user['identity'], user['language'], next_q_id)
         # Set next question
-        db[user.identity]['qa']['q'] = next_q
+        user['answers']['qa']['q'] = next_q.id
         # If next question is a string, its the final recommendation. we will send it out then switch
         if isinstance(next_q, str):
             context['request']['message']['text'] = next_q
             context['request']['has_buttons'] = False
             self.send(user, context)
-            user.current_state = 10
+            user['context']['bq_state'] = 10
             return base_state.GO_TO_STATE("BasicQuestionState")
-        # else next question exists -> prepare data
+        # If next question exists -> prepare data
         else:
             self.set_data(context, next_q)
         # Send message

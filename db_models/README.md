@@ -1,51 +1,45 @@
 # Database structure
 
-## Message
-> probably worth saving all messages, if we ever plan to train rasa models
-* text: `str`
-* user: `User`
-
-## User
+## Tables
+#### Users
+* identity: `str`- primary key
 * user_id: `str`
 * service: `str`
-* identity: `str`
 * via_instance: `str`
 * first_name: `str`
 * last_name: `str`
 * username: `str`
 * language: `str`
-* type: `int` (MEDIC, SOCIAL, PATIENT)
-* created_at: `datetime`
+* type: `int` (AccountType)
+* created_at: `str`
 * last_location: `str` (coordinates)
-* last_active: `datetime`
+* last_active: `str`
+* conversation_id: `str`
+* answers: `dict`
+* states: `list`
+* context: `dict`
 
-## Resume
-* answers: `Answer`
-* user: `User`
 
-## Answer
+#### Conversations
+* id: `str`- primary key
+* users: `dict` ({'$identity1': '$identity2', '$identity2': '$identity1'})
+* type: `int` (AccountType)
+* created_at: `str`
+
+
+#### ConversationRequests
+* identity: `str`- primary key
+* type: `int` (AccountType)
+* created_at: `str`
+
+
+#### CheckBacks
+* identity: `str`- primary key
+* context: `dict`
+* send_at: `str`
+
+
+#### Message
+> probably worth saving all messages, if we ever plan to train rasa models
+* identity: `str`- primary key
 * text: `str`
-* file: `str` (file id, file path, etc)
-
-## State
-* name: `str`
-* user: `User`
-
-## Conversation
-> I don't like the naming but, uh.. user-worker is worse, because potentially we may want user-user conversations
-* user1: `User`
-* user2: `User`
-* type: `int` (MEDICAL, SOCIAL, COMMON)
-* created_at: `datetime`
-* status: `int` (FINISHED, ON-GOING)
-
-## ConversationRequest
-* user: `User`
-* type: `int` (MEDICAL, SOCIAL, COMMON)
-* created_at: `datetime`
-* resolved_at: `datetime`
-
-## ScheduledCheckBack
-* user: `User`
-* context: `Blob`
-* send_at: `datetime`

@@ -1,7 +1,6 @@
-from .user import User
-from .service_types import ServiceTypes
+from .typing_hints import User, ConversationRequest, Conversation, CheckBack
+from .enums import AccountType, ServiceTypes
+from .db import DataBase
 
-from .conversations import Conversation
-from .conversations import ConversationDispatcher
-
-__all__ = ['User', 'ServiceTypes', 'Conversation', 'ConversationDispatcher']
+__all__ = ['DataBase', 'AccountType', 'ServiceTypes', 'User', 'ConversationRequest',
+           'Conversation', 'CheckBack']

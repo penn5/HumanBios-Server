@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  caddy:
+    container_name: humanbios-server
+    image: humanbios-server
+    restart: unless-stopped
+    ports:
+    - 8282:8282
+
+networks:
+  default:
+    external:
+      name: caddynet

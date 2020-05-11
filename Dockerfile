@@ -18,7 +18,7 @@ WORKDIR /app
 RUN apk --no-cache add lapack libstdc++ git postgresql-libs \
  && apk add --virtual .build-deps python3-dev libffi-dev build-base g++ gcc gfortran musl-dev lapack-dev postgresql-dev \
  && pip3 install --upgrade pip wheel \
- && cat requirements.txt | xargs -n 1 pip3 install \
+ && pip3 install -r requirements.txt \
  && apk del .build-deps
-
+# Launch
 CMD python3 ./server.py

@@ -1,4 +1,4 @@
-from db_models.service_types import ServiceTypes
+from db_models import ServiceTypes
 
 
 def test_service_types_literals():

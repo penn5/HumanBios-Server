@@ -1,7 +1,7 @@
-from db_models import User, ServiceTypes
+from db_models import DataBase, User
+from db_models import ServiceTypes
+from settings import settings
 import fsm.states as states
-
-DUMMY_DB = {}
 
 
 class Handler(object):
@@ -11,6 +11,7 @@ class Handler(object):
         self.__start_state = "StartState"
         self.__states = {}
         self.__register_states(*states.collect())
+        self.db = DataBase(settings.DATABASE_URL)
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class
@@ -31,23 +32,43 @@ class Handler(object):
         return True, state(), name
 
     async def __get_or_register_user(self, context):
-        # Using dummy db for now
-        user = DUMMY_DB.get(context['request']['user']['identity'])
+        # Getting user from database
+        user = await self.db.get_user(context['request']['user']['identity'])
         if user is None:
-            user = User(user_id=context['request']['user']['user_id'],
-                        service=context['request']['service_in'],
-                        identity=context['request']['user']['identity'],
-                        via_instance=context['request']['via_instance'],
-                        first_name=context['request']['user']['first_name'],
-                        last_name=context['request']['user']['last_name'],
-                        username=context['request']['user']['username'])
-            DUMMY_DB[user.identity] = {'user': user, 'states': []}
-        else:
-            user = user['user']
+            user = {
+                        "user_id": context['request']['user']['user_id'],
+                        "service": context['request']['service_in'],
+                        "identity": context['request']['user']['identity'],
+                        "via_instance": context['request']['via_instance'],
+                        "first_name": context['request']['user']['first_name'],
+                        "last_name": context['request']['user']['last_name'],
+                        "username": context['request']['user']['username'],
+                        "language": 'en',
+                        "type": self.db.types.COMMON,
+                        "created_at": self.db.now().isoformat(),
+                        "last_location": None,
+                        "last_active": self.db.now().isoformat(),
+                        "conversation_id": None,
+                        "answers": dict(),
+                        "files": dict(),
+                        "states": list(),
+                        "context": dict()
+                    }
+            await self.db.create_user(user)
+
+        # @Important: Dynamically update associated service instance, when it was changed
+        if context['request']['via_instance'] != user["via_instance"]:
+            # Update database
+            user = await self.db.update_user(
+                user,
+                "SET via_instance = :v",
+                {":v": context['request']['via_instance']}
+            )
+
         await self.__register_event(user)
         return user
 
-    async def __register_event(self, user):
+    async def __register_event(self, user: User):
         # TODO: REGISTER USER ACTIVITY
         pass
 
@@ -60,13 +81,17 @@ class Handler(object):
         correct_state, current_state, current_state_name = self.__get_state(last_state)
         if not correct_state:
             # Registering new last state
-            DUMMY_DB[user.identity]['states'].append(current_state_name)
+            user = await self.db.update_user(
+                user,
+                "SET states = list_append(states, :i)",
+                {":i": [current_state_name]}
+            )
         # Call process method of some state
-        ret_code = await current_state.wrapped_process(context, user, DUMMY_DB)
+        ret_code = await current_state.wrapped_process(context, user, self.db)
         await self.__handle_ret_code(context, user, ret_code)
 
     # get last state of the user
-    async def last_state(self, user, context):
+    async def last_state(self, user: User, context):
         # special cases #
         # TELEGRAM SPECIAL CASES
         if context['request']['service_in'] == ServiceTypes.TELEGRAM:
@@ -76,7 +101,7 @@ class Handler(object):
                 return self.__start_state
         # defaults to __start_state
         try:
-            return DUMMY_DB[user.identity]['states'][-1]
+            return user['states'][-1]
         except IndexError:
             return self.__start_state
 
@@ -92,13 +117,18 @@ class Handler(object):
     async def __forward_to_state(self, context, user, next_state):
         last_state = await self.last_state(user, context)
         correct_state, current_state, current_state_name = self.__get_state(next_state)
-        DUMMY_DB[user.identity]['states'].append(current_state_name)
+        # Registering new last state
+        user = await self.db.update_user(
+            user,
+            "SET states = list_append(states, :i)",
+            {":i": [current_state_name]}
+        )
         # Check if history is too long
-        if len(DUMMY_DB[user.identity]['states']) > self.STATES_HISTORY_LENGTH:
-            DUMMY_DB[user.identity]['states'].pop(0)
+        if len(user['states']) > self.STATES_HISTORY_LENGTH:
+            user = await self.db.update_user(user, "REMOVE states[0]", None)
 
         if current_state.has_entry:
-            ret_code = await current_state.wrapped_entry(context, user, DUMMY_DB)
+            ret_code = await current_state.wrapped_entry(context, user, self.db)
         else:
-            ret_code = await current_state.wrapped_process(context, user, DUMMY_DB)
+            ret_code = await current_state.wrapped_process(context, user, self.db)
         await self.__handle_ret_code(context, user, ret_code)
