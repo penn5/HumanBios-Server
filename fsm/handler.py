@@ -61,7 +61,7 @@ class Handler(object):
             user = await self.db.update_user(
                 user,
                 "SET via_instance = :v",
-                {":v": user["via_instance"]}
+                {":v": context['request']['via_instance']}
             )
 
         await self.__register_event(user)
