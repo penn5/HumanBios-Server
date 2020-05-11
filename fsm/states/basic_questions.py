@@ -184,7 +184,7 @@ class BasicQuestionState(base_state.BaseState):
         # TODO: Add conditional `skip` button
         else:
             # Update current state
-            user['context']['bq_state'] = 1 + bonus_value
+            user['context']['bq_state'] += 1 + bonus_value
 
         # Update current key
         key = ORDER.get(user['context']['bq_state'])
