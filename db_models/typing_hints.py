@@ -1,4 +1,4 @@
-from typing import TypedDict, Dict, Union, List, Optional
+from typing import TypedDict, Dict, Union, List, Optional, Any
 from .enums import AccountType
 from datetime import datetime
 
@@ -16,10 +16,11 @@ class User(TypedDict):
     created_at: str
     last_location: Optional[str]
     last_active: str
-    answers: Dict[str, Union[str, dict]]
+    answers: Dict[str, Any]
     files: Dict[str, Union[str, list]]
     states: List[str]
     type: AccountType
+    context: Dict[str, Any]
 
 
 class Conversation(TypedDict):

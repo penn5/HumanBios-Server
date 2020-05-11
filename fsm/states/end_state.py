@@ -13,7 +13,7 @@ class ENDState(base_state.BaseState):
         context['request']['has_buttons'] = False
         self.send(user, context)
         # Reset the flow
-        db.set_state(user, 1)
+        user['context']['bq_state'] = 1
         # Clear list of states related to the user
         user['states'] = ['StartState']
         # The next message from user will trigger StartState

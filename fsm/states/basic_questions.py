@@ -19,7 +19,7 @@ class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
         # If returning to the state from somewhere, with current_state -> continue
-        if db.get_state(user) == 10:
+        if user['context']['bq_state'] == 10:
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
             context['request']['has_buttons'] = False
@@ -28,7 +28,7 @@ class BasicQuestionState(base_state.BaseState):
             return base_state.OK
         else:
             # @Important: Default starting state
-            db.set_state(user, 1)
+            user['context']['bq_state'] = 1
             # Send language message
             context['request']['message']['text'] = self.strings["choose_lang"]
             context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
@@ -39,7 +39,7 @@ class BasicQuestionState(base_state.BaseState):
 
     async def process(self, context, user: User, db):
         # Take key associated with state
-        key = ORDER.get(db.get_state(user))
+        key = ORDER.get(user['context']['bq_state'])
         # Raw text alias
         raw_text: str = context['request']['message']['text']
         # [DEBUG]:
@@ -146,7 +146,7 @@ class BasicQuestionState(base_state.BaseState):
             context['request']['message']['text'] = self.strings["end_convo"]
             self.send(user, context)
             # Reset the flow
-            db.set_state(user, 1)
+            user['context']['bq_state'] = 1
             # Clear list of states related to the user
             user['states'] = ["StartState"]
             return base_state.OK
@@ -173,10 +173,10 @@ class BasicQuestionState(base_state.BaseState):
             # Ensure jump from `location` -> `covapp QA`
             if key == "QA_TRIGGER":
                 # Set to the qa state
-                db.set_state(user, 5)
+                user['context']['bq_state'] = 5
             else:
                 # else go one step back
-                db.change_state(user, -1)
+                user['context']['bq_state'] -= 1
         # Stop button
         elif raw_text == self.strings['stop']:
             # Jump from current state to final `end` state
@@ -184,10 +184,10 @@ class BasicQuestionState(base_state.BaseState):
         # TODO: Add conditional `skip` button
         else:
             # Update current state
-            db.change_state(user, 1 + bonus_value)
+            user['context']['bq_state'] = 1 + bonus_value
 
         # Update current key
-        key = ORDER.get(db.get_state(user))
+        key = ORDER.get(user['context']['bq_state'])
         # Get button type and yes/no/back keyboard
         btn_type, buttons = self.simple_keyboard()
         # If key is in the free answers -> remove keyboard

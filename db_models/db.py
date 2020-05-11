@@ -36,7 +36,6 @@ class DataBase:
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
-        self.current_states = dict()
 
         DataBase._initialized = True
 
@@ -77,22 +76,13 @@ class DataBase:
             ExpressionAttributeValues=values,
             ReturnValues="UPDATED_NEW"
         )
-        # This is.. uh
+        # This is.. uh (since database returns only new value, not full object)
         for key, new_value in response['Attributes'].items():
             user[key] = new_value  # ignore warning
         return user
 
     async def commit_user(self, user: User):
         self.Users.put_item(Item=user)
-
-    def get_state(self, user: User):
-        return self.current_states.get(user['identity'], 1)
-
-    def set_state(self, user: User, state: int):
-        self.current_states[user['identity']] = state
-
-    def change_state(self, user: User, amount: int):
-        self.current_states[user['identity']] += amount
 
     # Conversation Requests
 
@@ -159,6 +149,7 @@ class DataBase:
                 ":c_at": {"S": condition.isoformat()}
             }
         )
+        # TODO: FINISH (add return with unpacked results and update `.requested_users` set with latest data)
 
     def has_user_request(self, identity: str):
         return identity in self.requested_users

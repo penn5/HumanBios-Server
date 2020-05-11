@@ -79,7 +79,7 @@ class QAState(base_state.BaseState):
             context['request']['message']['text'] = next_q
             context['request']['has_buttons'] = False
             self.send(user, context)
-            db.set_state(user, 10)
+            user['context']['bq_state'] = 10
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:

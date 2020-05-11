@@ -51,7 +51,8 @@ class Handler(object):
                         "conversation_id": None,
                         "answers": dict(),
                         "files": dict(),
-                        "states": list()
+                        "states": list(),
+                        "context": dict()
                     }
             await self.db.create_user(user)
 

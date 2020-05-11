@@ -17,6 +17,7 @@
 * conversation_id: `str`
 * answers: `dict`
 * states: `list`
+* context: `dict`
 
 
 #### Conversations
