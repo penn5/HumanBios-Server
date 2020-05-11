@@ -76,6 +76,7 @@ $ docker-compose up -d
 ```
 $ cd ../..
 ```
+**Note: in the following section alias `python` is used for `python3`. Change it accordingly to your python (Windows `py`, Linux `python3` etc)**  
 upgrade pip
 ```
 $ python -m pip install --upgrade pip
