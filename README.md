@@ -2,6 +2,8 @@
 
 ## Prerequisites
 `docker`, `docker-compose`, `python3.7`|`python3.8+`  
+Make sure to create docker network for the containers
+`docker network create caddynet`  
 
 ## Production
 #### Get code
@@ -32,7 +34,7 @@ $ docker pull amazon/dynamodb-local
 ```
 Run database image
 ```
-$ cd db_models
+$ cd docker/db
 $ docker-compose up -d
 ```
 #### Run server
@@ -42,29 +44,39 @@ $ docker-compose up -d
 ```
 
 ## Development (Not Dokerized)
-# Soon..
-"""
-First configure aws  
-**Important:** DynamoDB needs aws config even for local use, so we can just fill it with dummy data  
+#### Get code
 ```
-$ aws configure
-AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
-AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-Default region name [None]: us-west-2
-Default output format [None]: json
+$ git clone git@github.com:HumanbiOS/HumanBios-Server.git
 ```
-
-Verify database 
+or
 ```
-$ aws dynamodb list-tables --endpoint-url http://localhost:8000
+$ git clone https://github.com/HumanbiOS/HumanBios-Server.git
 ```
-
-[Info] Deleting tables
+#### Update submodules
 ```
-$ aws dynamodb delete-table --table-name <table_name>
+$ git submodule update --init --recursive
 ```
-
-#### Docker build
+#### Setup .env
 ```
-$ docker build -t humanbios-server .
+$ cp .env.example .env  
+```
+**Fill `.env`**  
+#### Database
+Pull database image
+```
+$ docker pull amazon/dynamodb-local
+```
+Run database image
+```
+$ cd docker/db
+$ docker-compose up -d
+```
+#### Run server
+(return to the root dir of the project)
+```
+$ cd ../..
+```
+start app
+```
+$ python server.py
 ```
