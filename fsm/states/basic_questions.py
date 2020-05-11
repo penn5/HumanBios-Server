@@ -137,7 +137,7 @@ class BasicQuestionState(base_state.BaseState):
         # Bonus value to skip one state
         bonus_value = 0
         # Denied disclaimer (or end of conv)
-        if (key == "disclaimer" or key == "wanna_help") and raw_text == self.strings['no']:
+        if (key == "disclaimer" or key == "wanna_help") and raw_text == self.strings['reject']:
             context['request']['message']['text'] = self.strings["bye"]
             context['request']['buttons'] = []
             context['request']['has_buttons'] = False
