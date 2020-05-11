@@ -103,7 +103,12 @@ class BasicQuestionState(base_state.BaseState):
             # @Important: bad value fallback
             else:
                 # Set of buttons, according user's language
-                common_buttons = [self.strings['yes'], self.strings['no'], self.strings['back'], self.strings['stop']]
+                if key == "disclaimer":
+                    common_buttons = [self.strings['accept'], self.strings['reject']]
+                else:
+                    common_buttons = [self.strings['yes'], self.strings['no']]
+                # Add key buttons all the time
+                common_buttons += [self.strings['back'], self.strings['stop']]
                 # Check if the question has strictly typed answer AND
                 # it is one of the answers (buttons)
                 if key not in free_answers and raw_text not in common_buttons:
@@ -194,6 +199,10 @@ class BasicQuestionState(base_state.BaseState):
         elif key == "choose_lang":
             # Change also button type to inline
             btn_type, buttons = self.lang_keyboard()
+        # @Important: If question is `disclaimer` - set special buttons
+        elif key == "disclaimer":
+            buttons = [{"text": self.strings['accept']}, {"text": self.strings['reject']},
+                       {"text": self.strings['back']}, {"text": self.strings['stop']}]
 
         # @Important: Trigger different state to ask covapp QA
         if key == "QA_TRIGGER":

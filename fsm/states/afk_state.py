@@ -7,6 +7,7 @@ class AFKState(base_state.BaseState):
     has_entry = False
 
     # TODO: @TMP: This method probably shouldn't be here when everything else works properly (AKA On Release)
+    #             because it's just to make it restart after finished
     async def process(self, context: Context, user: User, db):
         # Reset the flow
         db.current_states[user['identity']] = None
