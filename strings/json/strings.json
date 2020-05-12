@@ -6,6 +6,7 @@
   "stop": "Stop",
   "accept": "Accept",
   "reject": "Reject",
+  "skip": "Skip",
   "choose_lang": "Please select the language you want to me to talk in to you from now on.",
   "location": "Can you send us your location so we can track potential spread or warn you about cases close to you?",
   "location_button": "Send location",

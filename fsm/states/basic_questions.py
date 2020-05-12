@@ -74,7 +74,7 @@ class BasicQuestionState(base_state.BaseState):
                 # @Important: (Will be done automatically with the next event)
                 self.set_language(user['language'])
         # Recording the answers, if skipped first two steps
-        else:
+        elif raw_text != self.strings['skip']:
             # @Important: If user sends selfie - download the image
             if key == "selfie" and context['request']['has_image']:
                 # TODO: Store all users input `properly`
@@ -203,6 +203,11 @@ class BasicQuestionState(base_state.BaseState):
         elif key == "disclaimer":
             buttons = [{"text": self.strings['accept']}, {"text": self.strings['reject']},
                        {"text": self.strings['back']}, {"text": self.strings['stop']}]
+
+        # Insert skip button
+        if key in ["location", "selfie", "coughing"]:
+            # Insert before back and stop buttons
+            buttons.insert(len(buttons)-2, {"text": self.strings['skip']})
 
         # @Important: Trigger different state to ask covapp QA
         if key == "QA_TRIGGER":
