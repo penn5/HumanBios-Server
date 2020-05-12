@@ -67,7 +67,8 @@ class Handler(object):
             user = await self.db.update_user(
                 user['identity'],
                 "SET via_instance = :v",
-                {":v": context['request']['via_instance']}
+                {":v": context['request']['via_instance']},
+                user
             )
 
         await self.__register_event(user)
@@ -89,7 +90,8 @@ class Handler(object):
             user = await self.db.update_user(
                 user['identity'],
                 "SET states = list_append(states, :i)",
-                {":i": [current_state_name]}
+                {":i": current_state_name},
+                user
             )
         # Call process method of some state
         ret_code = await current_state.wrapped_process(context, user, self.db)
@@ -126,11 +128,12 @@ class Handler(object):
         user = await self.db.update_user(
             user,
             "SET states = list_append(states, :i)",
-            {":i": [current_state_name]}
+            {":i": current_state_name},
+            user
         )
         # Check if history is too long
         if len(user['states']) > self.STATES_HISTORY_LENGTH:
-            user = await self.db.update_user(user['identity'], "REMOVE states[0]", None)
+            user = await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
 
         if current_state.has_entry:
             ret_code = await current_state.wrapped_entry(context, user, self.db)
@@ -170,7 +173,7 @@ class Handler(object):
         await self.db.update_user(
             reminder['identity'],
             "SET states = list_append(states, :i)",
-            {":i": ["CheckbackState"]}
+            {":i": "CheckbackState"}
         )
         url = tokens[reminder['context']['request']['via_instance']].url
         async with session.post(url, json=reminder['context']) as response:

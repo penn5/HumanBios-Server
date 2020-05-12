@@ -68,7 +68,7 @@ class DataBase:
             # Return just item
             return response['Item']
 
-    async def update_user(self, identity: str, expression: str, values: Optional[dict]) -> User:
+    async def update_user(self, identity: str, expression: str, values: Optional[dict], user: User = None) -> Optional[User]:
         response = self.Users.update_item(
             Key={
                 'identity': identity
@@ -77,10 +77,11 @@ class DataBase:
             ExpressionAttributeValues=values,
             ReturnValues="UPDATED_NEW"
         )
-        # This is.. uh (since database returns only new value, not full object)
-        for key, new_value in response['Attributes'].items():
-            user[key] = new_value  # ignore warning
-        return user
+        if user is not None:
+            # This is.. uh (since database returns only new value, not full object)
+            for key, new_value in response['Attributes'].items():
+                user[key] = new_value  # ignore warning
+            return user
 
     async def commit_user(self, user: User):
         self.Users.put_item(Item=user)
