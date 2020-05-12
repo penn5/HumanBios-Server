@@ -10,7 +10,7 @@ class AFKState(base_state.BaseState):
     #             because it's just to make it restart after finished
     async def process(self, context: Context, user: User, db):
         # Reset the flow
-        db.current_states[user['identity']] = None
+        user['context']['bq_state'] = None
         # Set user to the start state
         user['states'] = ["StartState"]
         return base_state.OK
