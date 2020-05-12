@@ -22,7 +22,12 @@ class BasicQuestionState(base_state.BaseState):
         if user['context'].get("bq_state") == 10:
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
-            context['request']['has_buttons'] = False
+            context['request']['has_buttons'] = True
+            context['request']['buttons'] = [
+                {"text": self.strings['skip']},
+                {"text": self.strings['back']},
+                {"text": self.strings['stop']}
+            ]
             # Don't forget to add task
             self.send(user, context)
             return base_state.OK
