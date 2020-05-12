@@ -126,7 +126,7 @@ class Handler(object):
         correct_state, current_state, current_state_name = self.__get_state(next_state)
         # Registering new last state
         user = await self.db.update_user(
-            user,
+            user['identity'],
             "SET states = list_append(states, :i)",
             {":i":  [current_state_name]},
             user
