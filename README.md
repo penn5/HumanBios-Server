@@ -88,7 +88,7 @@ $ python -m pip install --upgrade virtualenv wheel
 setup python
 ```
 $ python -m venv .venv
-$ source .venv/bin/python
+$ source .venv/bin/activate
 $ python -m pip install -r requirements.txt
 ```
 start app
