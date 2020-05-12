@@ -130,7 +130,7 @@ class QAState(base_state.BaseState):
             context['request']['message']['text'] = self.strings['checkback']
             context['request']['has_buttons'] = True
             context['request']['buttons'] = [self.strings['yes'], self.strings['no']]
-            await db.create_checkback(user, context, timedelta(seconds=30))
+            await db.create_checkback(user, context, timedelta(minutes=2))
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:

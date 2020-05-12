@@ -65,7 +65,7 @@ class Handler(object):
         if context['request']['via_instance'] != user["via_instance"]:
             # Update database
             user = await self.db.update_user(
-                user,
+                user['identity'],
                 "SET via_instance = :v",
                 {":v": context['request']['via_instance']}
             )
@@ -87,7 +87,7 @@ class Handler(object):
         if not correct_state:
             # Registering new last state
             user = await self.db.update_user(
-                user,
+                user['identity'],
                 "SET states = list_append(states, :i)",
                 {":i": [current_state_name]}
             )
@@ -130,7 +130,7 @@ class Handler(object):
         )
         # Check if history is too long
         if len(user['states']) > self.STATES_HISTORY_LENGTH:
-            user = await self.db.update_user(user, "REMOVE states[0]", None)
+            user = await self.db.update_user(user['identity'], "REMOVE states[0]", None)
 
         if current_state.has_entry:
             ret_code = await current_state.wrapped_entry(context, user, self.db)
@@ -167,6 +167,11 @@ class Handler(object):
             logger.error("Failed to send reminder")
 
     async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
+        await self.db.update_user(
+            reminder['identity'],
+            "SET states = list_append(states, :i)",
+            {":i": ["CheckbackState"]}
+        )
         url = tokens[reminder['context']['request']['via_instance']].url
         async with session.post(url, json=reminder['context']) as response:
             # If reached server - log response

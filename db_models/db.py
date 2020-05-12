@@ -68,10 +68,10 @@ class DataBase:
             # Return just item
             return response['Item']
 
-    async def update_user(self, user: User, expression: str, values: Optional[dict]) -> User:
+    async def update_user(self, identity: str, expression: str, values: Optional[dict]) -> User:
         response = self.Users.update_item(
             Key={
-                'identity': user['identity']
+                'identity': identity
             },
             UpdateExpression=expression,
             ExpressionAttributeValues=values,
@@ -171,7 +171,6 @@ class DataBase:
                 "send_at": (self.now() + send_in).isoformat()
             }
         )
-        user['states'].append("CheckbackState")
 
     async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
         response = self.CheckBacks.query(
