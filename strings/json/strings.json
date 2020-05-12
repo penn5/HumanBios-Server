@@ -7,6 +7,7 @@
   "accept": "Accept",
   "reject": "Reject",
   "skip": "Skip",
+  "checkback": "Hey, are you willing to take another quiz to track how your situation changed?",
   "choose_lang": "Please select the language you want to me to talk in to you from now on.",
   "location": "Can you send us your location so we can track potential spread or warn you about cases close to you?",
   "location_button": "Send location",

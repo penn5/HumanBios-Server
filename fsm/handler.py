@@ -1,7 +1,11 @@
+from settings import settings, tokens, logger
+from datetime import timedelta, datetime
 from db_models import DataBase, User
 from db_models import ServiceTypes
-from settings import settings
+from db_models import CheckBack
 import fsm.states as states
+import asyncio
+import aiohttp
 
 
 class Handler(object):
@@ -12,6 +16,7 @@ class Handler(object):
         self.__states = {}
         self.__register_states(*states.collect())
         self.db = DataBase(settings.DATABASE_URL)
+        self.checkback_task = self.reminder_loop()
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class
@@ -132,3 +137,44 @@ class Handler(object):
         else:
             ret_code = await current_state.wrapped_process(context, user, self.db)
         await self.__handle_ret_code(context, user, ret_code)
+
+    async def reminder_loop(self) -> None:
+        try:
+            # Give server 30 seconds to spin up before doing anything
+            await asyncio.sleep(30)
+            logger.info("Reminder loop started")
+            while True:
+                now = self.db.now()
+                next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+                await asyncio.sleep((next_minute - now).total_seconds())
+                await self.schedule_nearby_reminders(next_minute)
+        except asyncio.CancelledError:
+            logger.info("Reminder loop stopped")
+        except Exception:
+            logger.error("Exception in reminder loop")
+
+    async def schedule_nearby_reminders(self, now: datetime) -> None:
+        until = now + timedelta(minutes=1)
+        all_items_in_range = await self.db.all_in_range(now, until)
+        async with aiohttp.ClientSession() as session:
+            for checkback in all_items_in_range:
+                asyncio.ensure_future(self.send_reminder(checkback, session))
+
+    async def send_reminder(self, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
+        try:
+            await self._send_reminder(checkback, session)
+        except Exception:
+            logger.error("Failed to send reminder")
+
+    async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
+        url = tokens[reminder['context']['request']['via_instance']].url
+        async with session.post(url, json=reminder['context']) as response:
+            # If reached server - log response
+            if response.status == 200:
+                result = await response.json()
+                logger.info(f"Sending checkback status: {result}")
+                return result
+            # Otherwise - log error
+            else:
+                logger.info(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
+                            f"identity={reminder['identity']}) status {await response.text()}")

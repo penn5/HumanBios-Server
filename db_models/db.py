@@ -1,6 +1,7 @@
 from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional
 from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
+from server_logic.definitions import Context
 from botocore.exceptions import ClientError
 from .create_db import create_db
 from .enums import AccountType
@@ -160,3 +161,24 @@ class DataBase:
 
     def now(self) -> datetime.datetime:
         return datetime.datetime.now(self.TZ)
+
+    async def create_checkback(self, user: User, context: Context, send_in: datetime.timedelta):
+        """Creates Checkback item in the according table"""
+        self.CheckBacks.put_item(
+            Item={
+                "identity": context['request']['user']['identity'],
+                "context": (context.deepcopy()).to_dict(),
+                "send_at": (self.now() + send_in).isoformat()
+            }
+        )
+        user['states'].append("CheckbackState")
+
+    async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
+        response = self.CheckBacks.query(
+            FilterExpression="send_at >= :now and send_at <= :until",
+            ExpressionAttributeNames={
+                ":now": {"S": now.isoformat()},
+                ":until": {"S": until.isoformat()}
+            }
+        )
+        return response['Items']

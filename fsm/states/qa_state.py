@@ -1,6 +1,7 @@
 from server_logic.definitions import Context
 from strings.qa_module import get_next_question, get_user_scores, get_string
 from db_models import ServiceTypes, User
+from datetime import timedelta
 from . import base_state
 
 
@@ -125,6 +126,11 @@ class QAState(base_state.BaseState):
             context['request']['has_buttons'] = False
             self.send(user, context)
             user['context']['bq_state'] = 10
+            # Create checkback task (in 30 seconds now)
+            context['request']['message']['text'] = self.strings['checkback']
+            context['request']['has_buttons'] = True
+            context['request']['buttons'] = [self.strings['yes'], self.strings['no']]
+            await db.create_checkback(context, timedelta(seconds=30))
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:
