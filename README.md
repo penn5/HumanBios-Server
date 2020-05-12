@@ -97,4 +97,7 @@ $ python server.py
 ```
 
 ## Update
+#### Update submodules
+`$ git submodule foreach git pull origin master`
+#### Else
 **Note: currently front ends names and tokens are kept in memory, so when you reload server or front end instance, you need to restart everything**
