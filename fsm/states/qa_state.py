@@ -1,5 +1,5 @@
 from server_logic.definitions import Context
-from strings.qa_module import get_next_question, get_user_scores
+from strings.qa_module import get_next_question, get_user_scores, get_string
 from db_models import ServiceTypes, User
 from . import base_state
 
@@ -56,20 +56,67 @@ class QAState(base_state.BaseState):
             # Sent another message
             self.send(user, context)
             return base_state.OK
+        # check if we have a multi question
+        if curr_q.multi:
+            # if the answer is next, it means the user skipped answering or submitted answers. Anyway, we want the
+            # next question
+            next_button = get_string(user['language'], 'questionnaire_button_next')
+            if raw_answer == next_button:
+                if curr_q.id in user['answers']['qa']['qa_results']:
+                    # we override this so we dont have to change the code later
+                    raw_answer = user['answers']['qa']['qa_results'][curr_q.id]
+            # this means the user submitted some kind of answer
+            else:
+                # first answer, we set this to an empty string so the in check works but we can use a False check later
+                if curr_q.id not in user['answers']['qa']['qa_results']:
+                    user['answers']['qa']['qa_results'][curr_q.id] = ""
+                # that means they resend an answer
+                if raw_answer in user['answers']['qa']['qa_results'][curr_q.id]:
+                    # Send invalid answer text
+                    context['request']['message']['text'] = self.strings['invalid_answer']
+                    context['request']['has_buttons'] = False
+                    self.send(user, context)
+                    # Repeat the question
+                    self.set_data(context, curr_q)
+                    # now we override the buttons
+                    context['request']['has_buttons'] = True
+                    keyboard = [{"text": answer} for answer in curr_q.answers if
+                                answer not in user['answers']['qa']['qa_results'][curr_q.id]]
+                    keyboard += [{"text": self.strings['stop']}]
+                    context['request']['buttons'] = keyboard
+                    # Sent another message
+                    self.send(user, context)
+                    return base_state.OK
+                # here we use the False check so we dont have a leading comma
+                if not user['answers']['qa']['qa_results'][curr_q.id]:
+                    user['answers']['qa']['qa_results'][curr_q.id] = raw_answer
+                # storing the answers in a string, separated with a ,
+                else:
+                    user['answers']['qa']['qa_results'][curr_q.id] += f", {raw_answer}"
+                # we have to rebuild the keyboard cause new answer
+                keyboard = [{"text": answer} for answer in curr_q.answers if
+                            answer not in user['answers']['qa']['qa_results'][curr_q.id]]
+                keyboard += [{"text": self.strings['stop']}]
+                context['request']['message']['text'] = self.strings['qa_multi'].format(next_button)
+                context['request']['has_buttons'] = True
+                context['request']['buttons'] = keyboard
+                self.send(user, context)
+                return base_state.OK
         # Record the answer
         user['answers']['qa']['qa_results'][curr_q.id] = raw_answer
         # Find next question
         next_q_id = None
-
         # If question is free, just get the next question
         if curr_q.free:
             # Set next id to the only possible question
             next_q_id = curr_q.answers
+        # if question is multi we can get the next answer
+        elif curr_q.multi:
+            next_q_id = curr_q.answers[get_string(user['language'], 'questionnaire_button_next')]
         # If answer in answers, map to the next question
         elif raw_answer in curr_q.answers:
             # In this questions, answers are the `answer`:`next_question` maps
             next_q_id = curr_q.answers[raw_answer]
-
         # Get next question via qa_module method
         next_q = get_next_question(user['identity'], user['language'], next_q_id)
         # If next question is a string, its the final recommendation. we will send it out then switch
