@@ -90,7 +90,7 @@ class Handler(object):
             user = await self.db.update_user(
                 user['identity'],
                 "SET states = list_append(states, :i)",
-                {":i": {"S": current_state_name}},
+                {":i": [current_state_name]},
                 user
             )
         # Call process method of some state
@@ -128,7 +128,7 @@ class Handler(object):
         user = await self.db.update_user(
             user,
             "SET states = list_append(states, :i)",
-            {":i":  {"S": current_state_name}},
+            {":i":  [current_state_name]},
             user
         )
         # Check if history is too long
@@ -173,7 +173,7 @@ class Handler(object):
         await self.db.update_user(
             reminder['identity'],
             "SET states = list_append(states, :i)",
-            {":i": {"S": "CheckbackState"}}
+            {":i": ["CheckbackState"]}
         )
         url = tokens[reminder['context']['request']['via_instance']].url
         async with session.post(url, json=reminder['context']) as response:
