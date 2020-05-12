@@ -3,6 +3,7 @@ from strings.qa_module import get_next_question, get_user_scores, get_string
 from db_models import ServiceTypes, User
 from datetime import timedelta
 from . import base_state
+import asyncio
 
 
 class QAState(base_state.BaseState):
@@ -130,7 +131,8 @@ class QAState(base_state.BaseState):
             context['request']['message']['text'] = self.strings['checkback']
             context['request']['has_buttons'] = True
             context['request']['buttons'] = [self.strings['yes'], self.strings['no']]
-            await db.create_checkback(user, context, timedelta(minutes=2))
+            await asyncio.sleep(60, self.send(user, context))
+            #await db.create_checkback(user, context, timedelta(minutes=2))
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:
