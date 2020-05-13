@@ -36,7 +36,7 @@ def create_db(dynamodb):
         )
         status.status = table.table_status
     except ClientError as e:
-        if e.response['Error']['Code'] == "":
+        if e.response['Error']['Code'] == "ResourceInUseException":
             status.status = "ALREADY EXISTS"
         else:
             raise e
@@ -65,7 +65,7 @@ def create_db(dynamodb):
         )
         status.status = table.table_status
     except ClientError as e:
-        if e.response['Error']['Code'] == "":
+        if e.response['Error']['Code'] == "ResourceInUseException":
             status.status = "ALREADY EXISTS"
         else:
             raise e
@@ -103,7 +103,7 @@ def create_db(dynamodb):
         )
         status.status = table.table_status
     except ClientError as e:
-        if e.response['Error']['Code'] == "":
+        if e.response['Error']['Code'] == "ResourceInUseException":
             status.status = "ALREADY EXISTS"
         else:
             raise e
@@ -132,7 +132,7 @@ def create_db(dynamodb):
         )
         status.status = table.table_status
     except ClientError as e:
-        if e.response['Error']['Code'] == "":
+        if e.response['Error']['Code'] == "ResourceInUseException":
             status.status = "ALREADY EXISTS"
         else:
             raise e
