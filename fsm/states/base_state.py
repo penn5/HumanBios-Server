@@ -1,12 +1,12 @@
 from server_logic.definitions import Context, SenderTask
-from settings import tokens, logger, ROOT_PATH
+from settings import tokens, ROOT_PATH
 from translation import Translator
 from aiohttp import ClientSession
 from strings import strings_text
 from db_models import User
 import aiofiles
 import asyncio
-import boto3
+import logging
 import os
 
 
@@ -139,9 +139,11 @@ class BaseState(object):
         async with ClientSession() as session:
             async with session.get(url) as response:
                 # Open file with aiofiles and start steaming bytes, write to the file
+                logging.debug(f"Downloading file: {url} to {filepath}")
                 async with aiofiles.open(filepath, 'wb') as f:
                     async for chunk in response.content.iter_any():
                         await f.write(chunk)
+                logging.debug(f"Finished download [{filepath}]")
         return filepath
 
     # @Important: check if downloaded file exist
@@ -180,11 +182,11 @@ class BaseState(object):
             # If reached server - log response
             if resp.status == 200:
                 result = await resp.json()
-                logger.info(f"Sending task status: {result}")
+                logging.info(f"Sending task status: {result}")
                 return result
             # Otherwise - log error
             else:
-                logger.info(f"[ERROR]: Sending task ({task}) status {await resp.text()}")
+                logging.error(f"[ERROR]: Sending task ({task}) status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):

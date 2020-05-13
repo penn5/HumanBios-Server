@@ -1,11 +1,12 @@
-from settings import settings, tokens, logger
 from datetime import timedelta, datetime
+from settings import settings, tokens
 from db_models import DataBase, User
 from db_models import ServiceTypes
 from db_models import CheckBack
 import fsm.states as states
 import asyncio
 import aiohttp
+import logging
 
 
 class Handler(object):
@@ -145,16 +146,16 @@ class Handler(object):
         try:
             # Give server 30 seconds to spin up before doing anything
             await asyncio.sleep(30)
-            logger.debug("Reminder loop started")
+            logging.debug("Reminder loop started")
             while True:
                 now = self.db.now()
                 next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
                 await asyncio.sleep((next_minute - now).total_seconds())
                 await self.schedule_nearby_reminders(next_minute)
         except asyncio.CancelledError:
-            logger.debug("Reminder loop stopped")
+            logging.debug("Reminder loop stopped")
         except Exception:
-            logger.error("Exception in reminder loop")
+            logging.error("Exception in reminder loop")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
@@ -167,7 +168,7 @@ class Handler(object):
         try:
             await self._send_reminder(checkback, session)
         except Exception:
-            logger.debug("Failed to send reminder")
+            logging.debug("Failed to send reminder")
 
     async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
         await self.db.update_user(
@@ -180,9 +181,9 @@ class Handler(object):
             # If reached server - log response
             if response.status == 200:
                 result = await response.json()
-                logger.debug(f"Sending checkback status: {result}")
+                logging.debug(f"Sending checkback status: {result}")
                 return result
             # Otherwise - log error
             else:
-                logger.error(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
+                logging.error(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
                              f"identity={reminder['identity']}) status {await response.text()}")

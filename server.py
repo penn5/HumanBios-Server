@@ -1,4 +1,4 @@
-from settings import ROOT_PATH, logger, Config
+from settings import ROOT_PATH, Config
 from server_logic.definitions import Context
 from sanic.response import json
 from fsm.handler import Handler
