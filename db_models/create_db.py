@@ -1,8 +1,21 @@
+from botocore.exceptions import ClientError
+
+
+class TableStatus:
+    def __init__(self, name: str, status: str = None):
+        self.status = status
+        self.name = name
+
+    def __repr__(self):
+        return f"{self.name}: {self.status}"
 
 
 def create_db(dynamodb):
+    statuses = list()
+
+    status = TableStatus('Users')
     try:
-        table1 = dynamodb.create_table(
+        table = dynamodb.create_table(
             TableName='Users',
             KeySchema=[
                 {
@@ -21,12 +34,17 @@ def create_db(dynamodb):
                 'WriteCapacityUnits': 1
             }
         )
-    except Exception as e:
-        print(e)
-        table1 = None
+        status.status = table.table_status
+    except ClientError as e:
+        if e.response['Error']['Code'] == "":
+            status.status = "ALREADY EXISTS"
+        else:
+            raise e
+    statuses.append(status)
 
+    status = TableStatus('Conversations')
     try:
-        table2 = dynamodb.create_table(
+        table = dynamodb.create_table(
             TableName='Conversations',
             KeySchema=[
                 {
@@ -45,12 +63,17 @@ def create_db(dynamodb):
                 'WriteCapacityUnits': 1
             }
         )
-    except Exception as e:
-        print(e)
-        table2 = None
+        status.status = table.table_status
+    except ClientError as e:
+        if e.response['Error']['Code'] == "":
+            status.status = "ALREADY EXISTS"
+        else:
+            raise e
+    statuses.append(status)
 
+    status = TableStatus('ConversationRequests')
     try:
-        table3 = dynamodb.create_table(
+        table = dynamodb.create_table(
             TableName='ConversationRequests',
             KeySchema=[
                 {
@@ -78,12 +101,17 @@ def create_db(dynamodb):
                 'WriteCapacityUnits': 1
             }
         )
-    except Exception as e:
-        print(e)
-        table3 = None
+        status.status = table.table_status
+    except ClientError as e:
+        if e.response['Error']['Code'] == "":
+            status.status = "ALREADY EXISTS"
+        else:
+            raise e
+    statuses.append(status)
 
+    status = TableStatus('CheckBacks')
     try:
-        table4 = dynamodb.create_table(
+        table = dynamodb.create_table(
             TableName='CheckBacks',
             KeySchema=[
                 {
@@ -102,8 +130,12 @@ def create_db(dynamodb):
                 'WriteCapacityUnits': 1
             }
         )
-    except Exception as e:
-        print(e)
-        table4 = None
+        status.status = table.table_status
+    except ClientError as e:
+        if e.response['Error']['Code'] == "":
+            status.status = "ALREADY EXISTS"
+        else:
+            raise e
+    statuses.append(status)
 
-    print("Table statuses:", ', '.join([x.table_status for x in (table1, table2, table3, table4) if x]))
+    print("Table statuses:", ', '.join(str(x) for x in statuses))
