@@ -131,10 +131,6 @@ class QAState(base_state.BaseState):
             context['request']['message']['text'] = self.strings['checkback']
             context['request']['has_buttons'] = True
             context['request']['buttons'] = [self.strings['yes'], self.strings['no']]
-            async def bloat():
-                await asyncio.sleep(60)
-                await self.send(user, context)
-            asyncio.create_task(bloat())
             #await db.create_checkback(user, context, timedelta(minutes=2))
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
