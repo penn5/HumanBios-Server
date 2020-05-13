@@ -5,14 +5,30 @@ import os
 # Logging
 logdir = os.path.join(ROOT_PATH, 'log')
 logfile = os.path.join(logdir, 'server.log')
+debug_logfile = os.path.join(logdir, 'debug_server.log')
 if not os.path.exists(logdir):
     os.mkdir(logdir)
+formatter = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+date_format = '%d-%b-%y %H:%M:%S'
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    format=formatter,
+    datefmt=date_format,
+    level=logging.ERROR
+)
 
-logfile_handler = logging.FileHandler(logfile, 'a', 'utf-8')
-logfile_handler.setLevel(logging.INFO)
-logfile_handler.setFormatter(formatter)
-logger.addHandler(logfile_handler)
+logging.basicConfig(
+    filename=logfile,
+    filemode="a+",
+    format=formatter,
+    datefmt=date_format,
+    level=logging.ERROR
+)
+
+logging.basicConfig(
+    filename=debug_logfile,
+    filemode="a+",
+    format=formatter,
+    datefmt=date_format,
+    level=logging.DEBUG
+)

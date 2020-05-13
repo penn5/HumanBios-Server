@@ -145,14 +145,14 @@ class Handler(object):
         try:
             # Give server 30 seconds to spin up before doing anything
             await asyncio.sleep(30)
-            logger.info("Reminder loop started")
+            logger.debug("Reminder loop started")
             while True:
                 now = self.db.now()
                 next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
                 await asyncio.sleep((next_minute - now).total_seconds())
                 await self.schedule_nearby_reminders(next_minute)
         except asyncio.CancelledError:
-            logger.info("Reminder loop stopped")
+            logger.debug("Reminder loop stopped")
         except Exception:
             logger.error("Exception in reminder loop")
 
@@ -167,7 +167,7 @@ class Handler(object):
         try:
             await self._send_reminder(checkback, session)
         except Exception:
-            logger.error("Failed to send reminder")
+            logger.debug("Failed to send reminder")
 
     async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
         await self.db.update_user(
@@ -180,9 +180,9 @@ class Handler(object):
             # If reached server - log response
             if response.status == 200:
                 result = await response.json()
-                logger.info(f"Sending checkback status: {result}")
+                logger.debug(f"Sending checkback status: {result}")
                 return result
             # Otherwise - log error
             else:
-                logger.info(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
-                            f"identity={reminder['identity']}) status {await response.text()}")
+                logger.error(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
+                             f"identity={reminder['identity']}) status {await response.text()}")
