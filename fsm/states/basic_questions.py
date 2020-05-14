@@ -23,11 +23,21 @@ class BasicQuestionState(base_state.BaseState):
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
             context['request']['has_buttons'] = True
+            context['request']['buttons_type'] = "text"
             context['request']['buttons'] = [
                 {"text": self.strings['skip']},
                 {"text": self.strings['back']},
                 {"text": self.strings['stop']}
             ]
+            # Don't forget to add task
+            self.send(user, context)
+            return base_state.OK
+            # If returning to the state from somewhere, with current_state -> continue
+        elif user['context'].get("bq_state") == 4:
+            # Send location message
+            context['request']['message']['text'] = self.strings["medical"]
+            context['request']['has_buttons'] = True
+            context['request']['buttons_type'], context['request']['buttons'] = self.simple_keyboard()
             # Don't forget to add task
             self.send(user, context)
             return base_state.OK
