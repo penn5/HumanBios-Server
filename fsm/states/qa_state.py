@@ -165,4 +165,5 @@ class QAState(base_state.BaseState):
         else:
             context['request']['buttons'] = []
         # Always add edge buttons
-        context['request']['buttons'] += [{"text": self.strings['back']}, {"text": self.strings['stop']}]
+        # {"text": self.strings['back']},
+        context['request']['buttons'] += [{"text": self.strings['stop']}]
