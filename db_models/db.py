@@ -6,9 +6,16 @@ from botocore.exceptions import ClientError
 from .create_db import create_db
 from .enums import AccountType
 import datetime
+import decimal
 import boto3
 import pytz
 import uuid
+import json
+
+def decimal_default(obj):
+    if isinstance(obj, decimal.Decimal):
+        return float(obj)
+    raise TypeError
 
 
 # TODO: Probably worth it to switch to async solution eventually but
@@ -168,17 +175,19 @@ class DataBase:
         self.CheckBacks.put_item(
             Item={
                 "identity": context['request']['user']['identity'],
-                "context": (context.deepcopy()).to_dict(),
+                "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default),
                 "send_at": (self.now() + send_in).isoformat()
             }
         )
 
     async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
-        response = self.CheckBacks.query(
-            FilterExpression="send_at >= :now and send_at <= :until",
-            ExpressionAttributeNames={
-                ":now": {"S": now.isoformat()},
-                ":until": {"S": until.isoformat()}
-            }
+        response = self.CheckBacks.scan(
+            #IndexName="time",
+            #KeyConditionExpression="send_at between :n and :u",
+            #ExpressionAttributeValues={
+            #    ":n": now.isoformat(),
+            #    ":u": until.isoformat()
+            #}
+            FilterExpression=Key('send_at').between(now.isoformat(), until.isoformat())
         )
         return response['Items']

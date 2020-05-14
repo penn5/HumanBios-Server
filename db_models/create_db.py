@@ -123,6 +123,32 @@ def create_db(dynamodb):
                 {
                     'AttributeName': 'identity',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'send_at',
+                    'AttributeType': 'S'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'time',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'identity',
+                            'KeyType': "HASH"
+                        },
+                        {
+                            'AttributeName': 'send_at',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'KEYS_ONLY',
+                    },
+                     'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 1,
+                        'WriteCapacityUnits': 1
+                    }
                 }
             ],
             ProvisionedThroughput={

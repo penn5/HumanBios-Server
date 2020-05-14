@@ -182,8 +182,11 @@ class BaseState(object):
             # If reached server - log response
             if resp.status == 200:
                 result = await resp.json()
-                logging.info(f"Sending task status: {result}")
-                return result
+                if result:
+                    logging.debug(f"Sending task status: {result}")
+                    return result
+                else:
+                    logging.debug(f"Sending task status: No result")
             # Otherwise - log error
             else:
                 logging.error(f"[ERROR]: Sending task ({task}) status {await resp.text()}")

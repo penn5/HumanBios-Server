@@ -1,5 +1,5 @@
-from settings import ROOT_PATH, Config
 from server_logic.definitions import Context
+from settings import ROOT_PATH, Config
 from sanic.response import json
 from fsm.handler import Handler
 from settings import tokens
@@ -7,11 +7,13 @@ from sanic import Sanic
 #import googlemaps
 import asyncio
 import secrets
+import sanic
 import os
 
 
 app = Sanic(name="HumanBios-Server")
 handler = Handler()
+app.add_task(handler.reminder_loop())
 #gclient = googlemaps.Client(key=LOAD_KEY)
 
 
@@ -114,4 +116,4 @@ async def worker_setup(request):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8282, log_config=None)
+    app.run(host='0.0.0.0', port=8282, debug=False, access_log=False, log_config=None)

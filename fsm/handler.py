@@ -7,6 +7,7 @@ import fsm.states as states
 import asyncio
 import aiohttp
 import logging
+import json
 
 
 class Handler(object):
@@ -17,7 +18,6 @@ class Handler(object):
         self.__states = {}
         self.__register_states(*states.collect())
         self.db = DataBase(settings.DATABASE_URL)
-        self.checkback_task = self.reminder_loop()
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class
@@ -144,8 +144,6 @@ class Handler(object):
 
     async def reminder_loop(self) -> None:
         try:
-            # Give server 30 seconds to spin up before doing anything
-            await asyncio.sleep(30)
             logging.debug("Reminder loop started")
             while True:
                 now = self.db.now()
@@ -154,21 +152,22 @@ class Handler(object):
                 await self.schedule_nearby_reminders(next_minute)
         except asyncio.CancelledError:
             logging.debug("Reminder loop stopped")
-        except Exception:
-            logging.error("Exception in reminder loop")
+        except Exception as e:
+            logging.error(f"Exception in reminder loop: {e}")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
         all_items_in_range = await self.db.all_in_range(now, until)
         async with aiohttp.ClientSession() as session:
             for checkback in all_items_in_range:
-                asyncio.ensure_future(self.send_reminder(checkback, session))
+                await self.send_reminder(checkback, session)
 
     async def send_reminder(self, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
         try:
+            logging.debug("Sending checkback")
             await self._send_reminder(checkback, session)
-        except Exception:
-            logging.debug("Failed to send reminder")
+        except Exception as e:
+            logging.error(f"Failed to send reminder: {e}")
 
     async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
         await self.db.update_user(
@@ -176,8 +175,10 @@ class Handler(object):
             "SET states = list_append(states, :i)",
             {":i": ["CheckbackState"]}
         )
-        url = tokens[reminder['context']['request']['via_instance']].url
-        async with session.post(url, json=reminder['context']) as response:
+        context = json.loads(reminder["context"])
+        url = tokens[context['via_instance']].url
+        # TODO: Find a better way to deal with decimals
+        async with session.post(url, json=context) as response:
             # If reached server - log response
             if response.status == 200:
                 result = await response.json()

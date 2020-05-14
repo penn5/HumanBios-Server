@@ -2,6 +2,8 @@ from .settings import CLOUD_TRANSLATION_API_KEY
 from .settings import SERVER_SECURITY_TOKEN
 from .settings import ROOT_PATH
 from collections import namedtuple
+import logging
+import os
 Config = namedtuple("Config", ['token', 'url'])
 
 tokens = {
@@ -11,3 +13,36 @@ tokens = {
 }
 
 __all__ = ['tokens', 'ROOT_PATH', 'CLOUD_TRANSLATION_API_KEY', 'Config']
+
+
+# Logging
+logdir = os.path.join(ROOT_PATH, 'log')
+logfile = os.path.join(logdir, 'server.log')
+debug_logfile = os.path.join(logdir, 'debug_server.log')
+if not os.path.exists(logdir):
+    os.mkdir(logdir)
+formatter = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+date_format = '%d-%b-%y %H:%M:%S'
+
+logging.basicConfig(
+    format=formatter,
+    datefmt=date_format,
+    level=logging.INFO
+)
+
+logging.basicConfig(
+    filename=logfile,
+    filemode="a+",
+    format=formatter,
+    datefmt=date_format,
+    level=logging.ERROR
+)
+
+logging.basicConfig(
+    filename=debug_logfile,
+    filemode="a+",
+    format=formatter,
+    datefmt=date_format,
+    level=logging.DEBUG
+)
+
