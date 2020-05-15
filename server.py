@@ -12,6 +12,7 @@ import os
 
 app = Sanic(name="HumanBios-Server")
 handler = Worker()
+handler.start()
 #gclient = googlemaps.Client(key=LOAD_KEY)
 
 
