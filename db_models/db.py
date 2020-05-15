@@ -196,9 +196,9 @@ class DataBase:
         )
         # Delete all checkbacks from the db
         # Limited to 25 items per request
-        for each_group in response['Items'][::25]:
-            print(type(each_group))
-            self.dynamodb.batch_write_item(RequestItems={
-                "CheckBacks": [{"DeleteRequest": {"Key": key['id']}} for key in each_group if key is not None]
-            })
+        # for each_group in response['Items'][::25]:
+        #    print(type(each_group))
+        #    self.dynamodb.batch_write_item(RequestItems={
+        #        "CheckBacks": [{"DeleteRequest": {"Key": key['id']}} for key in each_group if key is not None]
+        #    })
         return response['Items']
