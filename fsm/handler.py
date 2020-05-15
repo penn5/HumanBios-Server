@@ -181,16 +181,16 @@ class Handler(object):
             logging.info("Reminder loop started")
             while True:
                 now = self.db.now()
-                next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-                await asyncio.sleep((next_minute - now).total_seconds())
-                await self.schedule_nearby_reminders(next_minute)
+                next_circle = (now + timedelta(minutes=5)).replace(second=0, microsecond=0)
+                await asyncio.sleep((next_circle - now).total_seconds())
+                await self.schedule_nearby_reminders(next_circle)
         except asyncio.CancelledError:
             logging.info("Reminder loop stopped")
         except Exception as e:
             logging.error(f"Exception in reminder loop: {e}")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
-        until = now + timedelta(minutes=1)
+        until = now + timedelta(minutes=5)
         all_items_in_range = await self.db.all_in_range(now, until)
         async with aiohttp.ClientSession() as session:
             await asyncio.gather(*[self.send_reminder(checkback, session) for checkback in all_items_in_range])
