@@ -16,6 +16,7 @@ $ git clone https://github.com/HumanbiOS/HumanBios-Server.git
 ```
 #### Update submodules
 ```
+$ cd HumanBios-Server
 $ git submodule update --init --recursive
 ```
 #### Setup .env
