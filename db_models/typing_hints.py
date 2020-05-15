@@ -37,6 +37,7 @@ class ConversationRequest(TypedDict):
 
 
 class CheckBack(TypedDict):
+    id: str
     identity: str
     context: str
     send_at: str

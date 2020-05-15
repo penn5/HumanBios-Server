@@ -8,6 +8,7 @@ import threading
 import asyncio
 import aiohttp
 import logging
+import random
 import queue
 import json
 
@@ -181,13 +182,13 @@ class Handler(object):
             logging.info("Reminder loop started")
             while True:
                 now = self.db.now()
-                next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-                await asyncio.sleep((next_minute - now).total_seconds())
-                await self.schedule_nearby_reminders(next_minute)
+                next_circle = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+                await asyncio.sleep((next_circle - now).total_seconds())
+                await self.schedule_nearby_reminders(next_circle)
         except asyncio.CancelledError:
             logging.info("Reminder loop stopped")
         except Exception as e:
-            logging.error(f"Exception in reminder loop: {e}")
+            logging.exception(f"Exception in reminder loop: {e}")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
@@ -197,10 +198,15 @@ class Handler(object):
 
     async def send_reminder(self, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
         try:
+            # @Important: Introduce random sleep before sending the reminder
+            # @Important: so that reminders are sent on the range and front end is not overload
+            random_sleep = random.randint(1, 60 * 5)
+            logging.info(f"Sending checkback after {random_sleep} seconds")
+            await asyncio.sleep(random_sleep)
             logging.info("Sending checkback")
             await self._send_reminder(checkback, session)
         except Exception as e:
-            logging.error(f"Failed to send reminder: {e}")
+            logging.exception(f"Failed to send reminder: {e}")
 
     async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
         await self.db.update_user(
@@ -220,4 +226,4 @@ class Handler(object):
             # Otherwise - log error
             else:
                 logging.error(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
-                             f"identity={reminder['identity']}) status {await response.text()}")
+                              f"identity={reminder['identity']}) status {await response.text()}")

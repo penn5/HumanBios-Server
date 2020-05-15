@@ -115,4 +115,4 @@ async def worker_setup(request):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8282, debug=DEBUG, access_log=DEBUG, log_config=None, workers=N_CORES)
+    app.run(host='0.0.0.0', port=8282, debug=DEBUG, access_log=DEBUG, workers=N_CORES)

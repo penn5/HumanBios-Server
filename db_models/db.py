@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 from .create_db import create_db
 from .enums import AccountType
 import datetime
+import logging
 import decimal
 import boto3
 import pytz
@@ -175,6 +176,7 @@ class DataBase:
         """Creates Checkback item in the according table"""
         self.CheckBacks.put_item(
             Item={
+                "id": str(uuid.uuid4()),
                 "identity": context['request']['user']['identity'],
                 "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default),
                 "send_at": (self.now() + send_in).isoformat()
@@ -189,8 +191,17 @@ class DataBase:
             #    ":n": now.isoformat(),
             #    ":u": until.isoformat()
             #}
+            # TODO: Maybe at some point optimise to use .query instead of .scan
+            # TODO: basically scan takes all values from db nad
             FilterExpression=Key('send_at').between(now.isoformat(), until.isoformat())
         )
+        # Delete all checkbacks from the db
+        # Limited to 25 items per request
+        # for each_group in response['Items'][::25]:
+        #    print(type(each_group))
+        #    self.dynamodb.batch_write_item(RequestItems={
+        #        "CheckBacks": [{"DeleteRequest": {"Key": key['id']}} for key in each_group if key is not None]
+        #    })
         return response['Items']
 
 
