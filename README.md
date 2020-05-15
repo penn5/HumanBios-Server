@@ -40,7 +40,7 @@ $ docker-compose up -d
 ```
 #### Run server
 ```
-$ cd ..
+$ cd ../..
 $ docker-compose up -d
 ```
 
