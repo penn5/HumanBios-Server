@@ -20,4 +20,4 @@ try:
     DEBUG = bool(eval(os.environ['DEBUG']))
 except ValueError as e:
     DEBUG = None
-    logging.error(f"Expected bool, got {os.environ['DEBUG']}")
+    logging.exception(f"Expected bool, got {os.environ['DEBUG']}")
