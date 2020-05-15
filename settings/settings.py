@@ -1,3 +1,4 @@
+import logging
 import dotenv
 import os
 
@@ -15,10 +16,8 @@ AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
 AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 
 N_CORES = int(os.environ['N_CORES'])
-_DEBUG = os.environ['DEBUG']
-if _DEBUG == "True":
-    DEBUG = True
-elif _DEBUG == "False":
-    DEBUG = False
-else:
-    raise ValueError("DEBUG must be True or False")
+try:
+    DEBUG = bool(eval(os.environ['DEBUG']))
+except ValueError as e:
+    DEBUG = None
+    logging.error(f"Expected bool, got {os.environ['DEBUG']}")
