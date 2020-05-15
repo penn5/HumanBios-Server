@@ -1,19 +1,17 @@
+from settings import ROOT_PATH, Config, N_CORES, DEBUG
 from server_logic.definitions import Context
-from settings import ROOT_PATH, Config
 from sanic.response import json
-from fsm.handler import Handler
+from fsm.handler import Worker
 from settings import tokens
 from sanic import Sanic
 #import googlemaps
-import asyncio
 import secrets
 import sanic
 import os
 
 
 app = Sanic(name="HumanBios-Server")
-handler = Handler()
-app.add_task(handler.reminder_loop())
+handler = Worker()
 #gclient = googlemaps.Client(key=LOAD_KEY)
 
 
@@ -41,7 +39,7 @@ async def data_handler(request):
     # Replace security token to the server's after validation
     ctx.replace_security_token()
     # process message
-    asyncio.create_task(handler.process(ctx))
+    handler.process(ctx)
     # return context
     return json(ctx.ok)
 
@@ -116,4 +114,4 @@ async def worker_setup(request):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8282, debug=False, access_log=False, log_config=None)
+    app.run(host='0.0.0.0', port=8282, debug=DEBUG, access_log=DEBUG, log_config=None, workers=N_CORES)

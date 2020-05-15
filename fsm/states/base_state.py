@@ -181,12 +181,13 @@ class BaseState(object):
         async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
             # If reached server - log response
             if resp.status == 200:
-                result = await resp.json()
-                if result:
-                    logging.debug(f"Sending task status: {result}")
-                    return result
-                else:
-                    logging.debug(f"Sending task status: No result")
+                pass  # [DEBUG]
+                #result = await resp.json()
+                #if result:
+                #    logging.info(f"Sending task status: {result}")
+                #    return result
+                #else:
+                #    logging.info(f"Sending task status: No result")
             # Otherwise - log error
             else:
                 logging.error(f"[ERROR]: Sending task ({task}) status {await resp.text()}")

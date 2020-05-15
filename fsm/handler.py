@@ -4,10 +4,44 @@ from db_models import DataBase, User
 from db_models import ServiceTypes
 from db_models import CheckBack
 import fsm.states as states
+import threading
 import asyncio
 import aiohttp
 import logging
+import queue
 import json
+
+
+class Worker(threading.Thread):
+    def __init__(self, loop_time=1.0 / 250):
+        self.q = queue.Queue()
+        self.timeout = loop_time
+        self.handler = Handler()
+        super(Worker, self).__init__()
+
+    def process(self, ctx):
+        self.q.put(ctx)
+
+    async def _run_processes(self):
+        while True:
+            try:
+                ctx = self.q.get(timeout=self.timeout)
+                asyncio.ensure_future(self.handler.process(ctx))
+            except queue.Empty:
+                await self.idle()
+            except Exception as e:
+                logging.exception(e)
+
+    def run(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.get_event_loop()
+        # Background tasks
+        asyncio.ensure_future(self.handler.reminder_loop())
+
+        loop.run_until_complete(self._run_processes())
+
+    async def idle(self):
+        await asyncio.sleep(self.timeout)
 
 
 class Handler(object):
@@ -144,14 +178,14 @@ class Handler(object):
 
     async def reminder_loop(self) -> None:
         try:
-            logging.debug("Reminder loop started")
+            logging.info("Reminder loop started")
             while True:
                 now = self.db.now()
                 next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
                 await asyncio.sleep((next_minute - now).total_seconds())
                 await self.schedule_nearby_reminders(next_minute)
         except asyncio.CancelledError:
-            logging.debug("Reminder loop stopped")
+            logging.info("Reminder loop stopped")
         except Exception as e:
             logging.error(f"Exception in reminder loop: {e}")
 
@@ -159,12 +193,11 @@ class Handler(object):
         until = now + timedelta(minutes=1)
         all_items_in_range = await self.db.all_in_range(now, until)
         async with aiohttp.ClientSession() as session:
-            for checkback in all_items_in_range:
-                await self.send_reminder(checkback, session)
+            await asyncio.gather(*[self.send_reminder(checkback, session) for checkback in all_items_in_range])
 
     async def send_reminder(self, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
         try:
-            logging.debug("Sending checkback")
+            logging.info("Sending checkback")
             await self._send_reminder(checkback, session)
         except Exception as e:
             logging.error(f"Failed to send reminder: {e}")
@@ -182,7 +215,7 @@ class Handler(object):
             # If reached server - log response
             if response.status == 200:
                 result = await response.json()
-                logging.debug(f"Sending checkback status: {result}")
+                logging.info(f"Sending checkback status: {result}")
                 return result
             # Otherwise - log error
             else:

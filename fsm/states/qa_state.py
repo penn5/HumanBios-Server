@@ -61,8 +61,8 @@ class QAState(base_state.BaseState):
                 return base_state.OK
             # check if we have a multi question
             if curr_q.multi:
-                # if the answer is next, it means the user skipped answering or submitted answers. Anyway, we want the
-                # next question
+                # @Important: if the answer is next, it means the user skipped answering or
+                # submitted answers. Anyway, we want the next question
                 next_button = get_string(user['language'], 'questionnaire_button_next')
                 if raw_answer == next_button:
                     if curr_q.id in user['answers']['qa']['qa_results']:
@@ -70,7 +70,8 @@ class QAState(base_state.BaseState):
                         raw_answer = user['answers']['qa']['qa_results'][curr_q.id]
                 # this means the user submitted some kind of answer
                 else:
-                    # first answer, we set this to an empty string so the in check works but we can use a False check later
+                    # @Important: first answer, we set this to an empty string so the in
+                    # @Important: check works but we can use a False check later
                     if curr_q.id not in user['answers']['qa']['qa_results']:
                         user['answers']['qa']['qa_results'][curr_q.id] = ""
                     # that means they resend an answer
