@@ -188,7 +188,7 @@ class Handler(object):
         except asyncio.CancelledError:
             logging.info("Reminder loop stopped")
         except Exception as e:
-            logging.error(f"Exception in reminder loop: {e}")
+            logging.exception(f"Exception in reminder loop: {e}")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
@@ -206,7 +206,7 @@ class Handler(object):
             logging.info("Sending checkback")
             await self._send_reminder(checkback, session)
         except Exception as e:
-            logging.error(f"Failed to send reminder: {e}")
+            logging.exception(f"Failed to send reminder: {e}")
 
     async def _send_reminder(self, reminder: CheckBack, session: aiohttp.ClientSession) -> None:
         await self.db.update_user(

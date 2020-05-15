@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 from .create_db import create_db
 from .enums import AccountType
 import datetime
+import logging
 import decimal
 import boto3
 import pytz
@@ -174,7 +175,7 @@ class DataBase:
         """Creates Checkback item in the according table"""
         self.CheckBacks.put_item(
             Item={
-                "id": uuid.uuid4(),
+                "id": str(uuid.uuid4()),
                 "identity": context['request']['user']['identity'],
                 "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default),
                 "send_at": (self.now() + send_in).isoformat()
@@ -195,7 +196,8 @@ class DataBase:
         )
         # Delete all checkbacks from the db
         # Limited to 25 items per request
-        for each_group in response['Item'][::25]:
+        for each_group in response['Items'][::25]:
+            print(type(each_group))
             self.dynamodb.batch_write_item(RequestItems={
                 "CheckBacks": [{"DeleteRequest": {"Key": key['id']}} for key in each_group if key is not None]
             })

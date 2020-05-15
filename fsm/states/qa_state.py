@@ -122,9 +122,11 @@ class QAState(base_state.BaseState):
                 # In this questions, answers are the `answer`:`next_question` maps
                 next_q_id = curr_q.answers[raw_answer]
         else:
-            next_q_id = get_previous_question(user['identity'], user['language'], curr_q.id)
-            if next_q_id is None:
+            next_q = get_previous_question(user['identity'], user['language'], curr_q.id)
+            if next_q is None:
                 user['context']['bq_state'] = 4
+                return base_state.GO_TO_STATE("BasicQuestionState")
+            next_q_id = next_q.id
         # Get next question via qa_module method
         next_q = get_next_question(user['identity'], user['language'], next_q_id)
         # If next question is a string, its the final recommendation. we will send it out then switch
