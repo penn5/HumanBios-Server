@@ -174,6 +174,7 @@ class DataBase:
         """Creates Checkback item in the according table"""
         self.CheckBacks.put_item(
             Item={
+                "id": uuid.uuid4(),
                 "identity": context['request']['user']['identity'],
                 "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default),
                 "send_at": (self.now() + send_in).isoformat()
@@ -188,6 +189,14 @@ class DataBase:
             #    ":n": now.isoformat(),
             #    ":u": until.isoformat()
             #}
+            # TODO: Maybe at some point optimise to use .query instead of .scan
+            # TODO: basically scan takes all values from db nad
             FilterExpression=Key('send_at').between(now.isoformat(), until.isoformat())
         )
+        # Delete all checkbacks from the db
+        # Limited to 25 items per request
+        for each_group in response['Item'][::25]:
+            self.dynamodb.batch_write_item(RequestItems={
+                "CheckBacks": [{"DeleteRequest": {"Key": key['id']}} for key in each_group if key is not None]
+            })
         return response['Items']

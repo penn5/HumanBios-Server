@@ -115,13 +115,13 @@ def create_db(dynamodb):
             TableName='CheckBacks',
             KeySchema=[
                 {
-                    'AttributeName': 'identity',
+                    'AttributeName': 'id',
                     'KeyType': 'HASH'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'identity',
+                    'AttributeName': 'id',
                     'AttributeType': 'S'
                 },
                 {
@@ -134,7 +134,7 @@ def create_db(dynamodb):
                     'IndexName': 'time',
                     'KeySchema': [
                         {
-                            'AttributeName': 'identity',
+                            'AttributeName': 'id',
                             'KeyType': "HASH"
                         },
                         {
@@ -145,7 +145,7 @@ def create_db(dynamodb):
                     'Projection': {
                         'ProjectionType': 'KEYS_ONLY',
                     },
-                     'ProvisionedThroughput': {
+                    'ProvisionedThroughput': {
                         'ReadCapacityUnits': 1,
                         'WriteCapacityUnits': 1
                     }
