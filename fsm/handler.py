@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime
 from settings import settings, tokens
-from db_models import DataBase, User
+from db_models import database, User
 from db_models import ServiceTypes
 from db_models import CheckBack
 import fsm.states as states
@@ -51,7 +51,7 @@ class Handler(object):
         self.__start_state = "StartState"
         self.__states = {}
         self.__register_states(*states.collect())
-        self.db = DataBase(settings.DATABASE_URL)
+        self.db = database
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class

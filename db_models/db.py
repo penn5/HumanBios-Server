@@ -1,3 +1,4 @@
+from settings import settings
 from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional
 from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
@@ -191,3 +192,6 @@ class DataBase:
             FilterExpression=Key('send_at').between(now.isoformat(), until.isoformat())
         )
         return response['Items']
+
+
+database = DataBase(settings.DATABASE_URL)
