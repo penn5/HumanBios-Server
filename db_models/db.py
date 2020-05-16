@@ -187,14 +187,14 @@ class DataBase:
         )
 
     async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
-        response = table.query(
+        response = self.CheckBacks.query(
             IndexName = "time",
             ProjectionExpression="id, server_mac, send_at, context, #idtt",
             # Hide from reserved db keywords
             ExpressionAttributeNames={
                 "#idtt": "identity"
             },
-            KeyConditionExpression=Key("server_mac").eq(mac) & Key("send_at").between(now.isoformat(), until.isoformat())
+            KeyConditionExpression=Key("server_mac").eq(self.mac) & Key("send_at").between(now.isoformat(), until.isoformat())
         )
         # TODO: 1) Remove old checkbacks, BUT only after 1 hour or so (see 2)
         # TODO: 2) Eventually (after 10-45 minutes, *randomly*) look for checkbacks,
