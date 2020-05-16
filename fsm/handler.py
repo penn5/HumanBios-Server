@@ -200,7 +200,7 @@ class Handler(object):
         try:
             # @Important: Introduce random sleep before sending the reminder
             # @Important: so that reminders are sent on the range and front end is not overload
-            random_sleep = random.randint(1, 60 * 5)
+            random_sleep = random.randint(1, 60)
             logging.info(f"Sending checkback after {random_sleep} seconds")
             await asyncio.sleep(random_sleep)
             logging.info("Sending checkback")

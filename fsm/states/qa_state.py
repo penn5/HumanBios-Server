@@ -135,12 +135,12 @@ class QAState(base_state.BaseState):
             context['request']['has_buttons'] = False
             self.send(user, context)
             user['context']['bq_state'] = 10
-            # Create checkback task (in 5 * 60 seconds now)
+            # Create checkback task (in 60 seconds now)
             context['request']['message']['text'] = self.strings['checkback']
             context['request']['has_buttons'] = True
             context['request']['buttons_type'] = "text"
             context['request']['buttons'] = [{"text": self.strings['yes']}, {"text": self.strings['no']}]
-            await db.create_checkback(user, context, timedelta(minutes=5))
+            await db.create_checkback(user, context, timedelta(days=1))
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:
