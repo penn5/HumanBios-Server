@@ -135,7 +135,7 @@ class QAState(base_state.BaseState):
             context['request']['has_buttons'] = False
             self.send(user, context)
             user['context']['bq_state'] = 10
-            # Create checkback task (in 30 seconds now)
+            # Create checkback task (in 5 * 60 seconds now)
             context['request']['message']['text'] = self.strings['checkback']
             context['request']['has_buttons'] = True
             context['request']['buttons_type'] = "text"

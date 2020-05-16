@@ -121,20 +121,24 @@ def create_db(dynamodb):
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'id',
+                    'AttributeName': "id",
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'server_mac',
                     'AttributeType': 'S'
                 },
                 {
                     'AttributeName': 'send_at',
                     'AttributeType': 'S'
-                }
+                },
             ],
             GlobalSecondaryIndexes=[
                 {
                     'IndexName': 'time',
                     'KeySchema': [
                         {
-                            'AttributeName': 'id',
+                            'AttributeName': 'server_mac',
                             'KeyType': "HASH"
                         },
                         {

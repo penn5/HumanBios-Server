@@ -34,7 +34,9 @@
 
 
 #### CheckBacks
-* identity: `str`- primary key
+* id: `str`
+* server_mac: `str`
+* identity: `str`
 * context: `dict`
 * send_at: `str`
 

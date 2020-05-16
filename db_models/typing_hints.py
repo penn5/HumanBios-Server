@@ -38,6 +38,7 @@ class ConversationRequest(TypedDict):
 
 class CheckBack(TypedDict):
     id: str
+    server_mac: str
     identity: str
     context: str
     send_at: str

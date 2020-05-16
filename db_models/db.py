@@ -46,8 +46,10 @@ class DataBase:
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
-
+        self.mac = str(uuid.getnode())
+    
         DataBase._initialized = True
+
 
     # High level methods
 
@@ -177,6 +179,7 @@ class DataBase:
         self.CheckBacks.put_item(
             Item={
                 "id": str(uuid.uuid4()),
+                "server_mac": str(uuid.getnode()),
                 "identity": context['request']['user']['identity'],
                 "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default),
                 "send_at": (self.now() + send_in).isoformat()
@@ -184,24 +187,22 @@ class DataBase:
         )
 
     async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
-        response = self.CheckBacks.scan(
-            #IndexName="time",
-            #KeyConditionExpression="send_at between :n and :u",
-            #ExpressionAttributeValues={
-            #    ":n": now.isoformat(),
-            #    ":u": until.isoformat()
-            #}
-            # TODO: Maybe at some point optimise to use .query instead of .scan
-            # TODO: basically scan takes all values from db nad
-            FilterExpression=Key('send_at').between(now.isoformat(), until.isoformat())
+        response = table.query(
+            IndexName = "time",
+            ProjectionExpression="id, server_mac, send_at, context, #idtt",
+            # Hide from reserved db keywords
+            ExpressionAttributeNames={
+                "#idtt": "identity"
+            },
+            KeyConditionExpression=Key("server_mac").eq(mac) & Key("send_at").between(now.isoformat(), until.isoformat())
         )
-        # Delete all checkbacks from the db
-        # Limited to 25 items per request
-        # for each_group in response['Items'][::25]:
-        #    print(type(each_group))
-        #    self.dynamodb.batch_write_item(RequestItems={
-        #        "CheckBacks": [{"DeleteRequest": {"Key": key['id']}} for key in each_group if key is not None]
-        #    })
+        # TODO: 1) Remove old checkbacks, BUT only after 1 hour or so (see 2)
+        # TODO: 2) Eventually (after 10-45 minutes, *randomly*) look for checkbacks,
+        # TODO:    that are not sent, from all possible server_mac addresses; 
+        # TODO:    basically if one server dies -> others should pick up checkback 
+        # TODO:    requests and manage them; why *randomly*, to avoid different servers
+        # TODO:    querying at exact same minute -> for that also probably worth to add
+        # TODO:    "was_sent" bool to the structure.
         return response['Items']
 
 
