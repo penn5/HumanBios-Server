@@ -187,6 +187,7 @@ class DataBase:
         )
 
     async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
+        # TODO: @Important: query is limited to 1MB, so need to move to pagination eventually 
         response = self.CheckBacks.query(
             IndexName = "time",
             ProjectionExpression="id, server_mac, send_at, context, #idtt",
