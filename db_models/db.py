@@ -1,5 +1,5 @@
 from settings import settings
-from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional
+from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session
 from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
 from server_logic.definitions import Context
@@ -43,6 +43,7 @@ class DataBase:
         self.Conversations = self.dynamodb.Table('Conversations')
         self.ConversationRequests = self.dynamodb.Table('ConversationRequests')
         self.CheckBacks = self.dynamodb.Table('CheckBacks')
+        self.Sessions = self.dynamodb.Table('Sessions')
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
@@ -205,6 +206,32 @@ class DataBase:
         # TODO:    querying at exact same minute -> for that also probably worth to add
         # TODO:    "was_sent" bool to the structure.
         return response['Items']
+
+    # Sessions
+    async def create_session(self, item: Session):
+        """Creates Session  item in the according table"""
+        self.Sessions.put_item(
+            Item=item
+        )
+
+    async def get_session(self, instance_name: str) -> Optional[Session]:
+        """Returns User item by the user identity"""
+        try:
+            response = self.Sessions.get_item(
+                Key={
+                    'name': instance_name
+                }
+            )
+        except ClientError as e:
+            # TODO: @Important: Change all prints to logger.info or .error
+            # Print Error Message and return None
+            print(e.response['Error']['Message'])
+        else:
+            # If not exist -> return None
+            if not response.get('Item'):
+                return
+            # Return just item
+            return response['Item']
 
 
 database = DataBase(settings.DATABASE_URL)

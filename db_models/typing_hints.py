@@ -42,3 +42,9 @@ class CheckBack(TypedDict):
     identity: str
     context: str
     send_at: str
+
+
+class Session(TypedDict):
+    name: str
+    token: str
+    url: str

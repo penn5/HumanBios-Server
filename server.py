@@ -4,6 +4,7 @@ from sanic.response import json
 from fsm.handler import Worker
 from settings import tokens
 from sanic import Sanic
+from db_models.db import database
 #import googlemaps
 import secrets
 import sanic
@@ -24,6 +25,13 @@ async def data_handler(request):
         return json({"status": 403, "message": "expected json"})
 
     token = tokens.get(data.get('via_instance'), '')
+    # the session might be saved in the database
+    if not token:
+        potential_session = await database.get_session(data.get('via_instance'))
+        if potential_session:
+            # it is, we save it in the cache and set the token to the retrieved values
+            tokens[potential_session["name"]] = Config(potential_session["token"], potential_session["url"])
+            token = tokens.get(data.get('via_instance'))
     # `not token` to avoid `'' == ''`
     if not token or not (data.get("security_token", '') == token.token):
         # add custom 403 error code
@@ -111,6 +119,7 @@ async def worker_setup(request):
     config_obj = Config(new_token, url)
     tokens[name] = config_obj
     # Return useful data back to the caller
+    await database.create_session({"name": name, "token": new_token, "url": url})
     return json({"status": 200, "name": name, "token": new_token})
 
 

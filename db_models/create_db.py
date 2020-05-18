@@ -168,4 +168,33 @@ def create_db(dynamodb):
             raise e
     statuses.append(status)
 
+    status = TableStatus('Sessions')
+    try:
+        table = dynamodb.create_table(
+            TableName='Sessions',
+            KeySchema=[
+                {
+                    'AttributeName': 'name',
+                    'KeyType': 'HASH'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'name',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 1,
+                'WriteCapacityUnits': 1
+            }
+        )
+        status.status = table.table_status
+    except ClientError as e:
+        if e.response['Error']['Code'] == "ResourceInUseException":
+            status.status = "ALREADY EXISTS"
+        else:
+            raise e
+    statuses.append(status)
+
     print("Table statuses:", ', '.join(str(x) for x in statuses))
