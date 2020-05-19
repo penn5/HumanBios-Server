@@ -44,7 +44,7 @@ class DataBase:
         self.ConversationRequests = self.dynamodb.Table('ConversationRequests')
         self.CheckBacks = self.dynamodb.Table('CheckBacks')
         self.Sessions = self.dynamodb.Table('Sessions')
-        self.BroadcastMessage = self.dynamodb.Table('BroadcastMessage')
+        self.BroadcastMessages = self.dynamodb.Table('BroadcastMessages')
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
@@ -238,7 +238,7 @@ class DataBase:
         return response['Items']
 
     async def create_broadcast(self, context: Context):
-        self.BroadcastMessage.put_item(
+        self.BroadcastMessages.put_item(
             Item={
                 "id": str(uuid.uuid4()),
                 "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default)
@@ -246,11 +246,11 @@ class DataBase:
         )
 
     async def all_new_broadcasts(self):
-        response = self.BroadcastMessage.scan()
+        response = self.BroadcastMessages.scan()
         return response['Count'], response['Items']
 
     async def remove_broadcast(self, item: BroadcastMessage):
-        self.BroadcastMessage.delete_item(
+        self.BroadcastMessages.delete_item(
             Key={
                 'id': item['id']
             }

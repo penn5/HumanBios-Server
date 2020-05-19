@@ -197,10 +197,10 @@ def create_db(dynamodb):
             raise e
     statuses.append(status)
 
-    status = TableStatus('BroadcastMessage')
+    status = TableStatus('BroadcastMessages')
     try:
         table = dynamodb.create_table(
-            TableName='BroadcastMessage',
+            TableName='BroadcastMessages',
             KeySchema=[
                 {
                     'AttributeName': 'id',
