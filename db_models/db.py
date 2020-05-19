@@ -14,6 +14,7 @@ import pytz
 import uuid
 import json
 
+
 def decimal_default(obj):
     if isinstance(obj, decimal.Decimal):
         return float(obj)
@@ -98,6 +99,32 @@ class DataBase:
     async def commit_user(self, user: User):
         self.Users.put_item(Item=user)
 
+    # Conversations
+    async def create_conversation(self, user: User, users: dict, type_: AccountType):
+        conv_id = str(uuid.uuid4())
+        self.Conversations.put_item(Item={
+            "id": conv_id,
+            "users": users,
+            "type": type_,
+            "created_at": self.now()
+        })
+        user['conversation_id'] = conv_id
+
+    async def get_conversation(self, user: User):
+        """Returns Conversation item by the user identity"""
+        try:
+            response = self.Conversations.get_item(
+                Key={
+                    'id': user['conversation_id']
+                }
+            )
+        except ClientError as e:
+            # Print Error Message and return None
+            logging.exception(e.response['Error']['Message'])
+        else:
+            # Return just item
+            return response['Item']
+
     # Conversation Requests
 
     # TODO: @Important: Still make methods async for now, because we don't
@@ -127,9 +154,8 @@ class DataBase:
                 }
             )
         except ClientError as e:
-            # TODO: @Important: Change all prints to logger.info or .error
             # Print Error Message and return None
-            print(e.response['Error']['Message'])
+            logging.exception(e.response['Error']['Message'])
         else:
             # Return just item
             return response['Item']

@@ -7,7 +7,7 @@ class TableStatus:
         self.name = name
 
     def __repr__(self):
-        return f"{self.name}:\t\t {self.status}"
+        return f"{self.name}: {self.status}"
 
 
 def create_db(dynamodb):

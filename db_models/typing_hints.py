@@ -1,6 +1,5 @@
 from typing import TypedDict, Dict, Union, List, Optional, Any
 from .enums import AccountType
-from datetime import datetime
 
 
 class User(TypedDict):
