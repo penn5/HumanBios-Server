@@ -7,7 +7,7 @@ class TableStatus:
         self.name = name
 
     def __repr__(self):
-        return f"{self.name}: {self.status}"
+        return f"{self.name}:\t\t\t {self.status}"
 
 
 def create_db(dynamodb):
@@ -197,10 +197,10 @@ def create_db(dynamodb):
             raise e
     statuses.append(status)
 
-    status = TableStatus('BroadcastMessage')
+    status = TableStatus('BroadcastMessages')
     try:
         table = dynamodb.create_table(
-            TableName='BroadcastMessage',
+            TableName='BroadcastMessages',
             KeySchema=[
                 {
                     'AttributeName': 'id',
@@ -226,4 +226,4 @@ def create_db(dynamodb):
             raise e
     statuses.append(status)
 
-    print("Table statuses:", '\n    '.join(str(x) for x in statuses))
+    print("Table statuses:\n", '\n    '.join(str(x) for x in statuses))
