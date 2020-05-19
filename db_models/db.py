@@ -52,7 +52,6 @@ class DataBase:
     
         DataBase._initialized = True
 
-
     # High level methods
 
     # User methods

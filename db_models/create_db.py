@@ -226,4 +226,4 @@ def create_db(dynamodb):
             raise e
     statuses.append(status)
 
-    print("Table statuses:", ', '.join(str(x) for x in statuses))
+    print("Table statuses:", '\n    '.join(str(x) for x in statuses))
