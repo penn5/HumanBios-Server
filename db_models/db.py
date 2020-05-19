@@ -1,5 +1,5 @@
 from settings import settings
-from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session
+from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session, BroadcastMessage
 from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
 from server_logic.definitions import Context
@@ -44,6 +44,7 @@ class DataBase:
         self.ConversationRequests = self.dynamodb.Table('ConversationRequests')
         self.CheckBacks = self.dynamodb.Table('CheckBacks')
         self.Sessions = self.dynamodb.Table('Sessions')
+        self.BroadcastMessage = self.dynamodb.Table('BroadcastMessage')
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
@@ -187,10 +188,10 @@ class DataBase:
             }
         )
 
-    async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
+    async def all_checkbacks_in_range(self, now: datetime.datetime, until: datetime.datetime):
         # TODO: @Important: query is limited to 1MB, so need to move to pagination eventually 
         response = self.CheckBacks.query(
-            IndexName = "time",
+            IndexName="time",
             ProjectionExpression="id, server_mac, send_at, context, #idtt",
             # Hide from reserved db keywords
             ExpressionAttributeNames={
@@ -232,6 +233,29 @@ class DataBase:
                 return
             # Return just item
             return response['Item']
+
+    async def all_frontend_sessions(self):
+        response = self.Sessions.scan()
+        return response['Items']
+
+    async def create_broadcast(self, context: Context):
+        self.BroadcastMessage.put_item(
+            Item={
+                "id": str(uuid.uuid4()),
+                "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default)
+            }
+        )
+
+    async def all_new_broadcasts(self):
+        response = self.BroadcastMessage.scan()
+        return response['Count'], response['Items']
+
+    async def remove_broadcast(self, item: BroadcastMessage):
+        self.BroadcastMessage.delete_item(
+            Key={
+                'id': item['id']
+            }
+        )
 
 
 database = DataBase(settings.DATABASE_URL)

@@ -96,6 +96,21 @@ async def worker_setup(request):
     # Generate new token and pull url
     if not url:
         return json({"status": 403, "message": "url invalid"})
+    # Pull broadcast channel from the request
+    broadcast_entity = data.get("broadcast")
+    # For "No entity" value must be None
+    if broadcast_entity == "":
+        return json({"status": 403, "message": "broadcast entity is invalid"})
+    # Pull psychological room from the request
+    psychological_room = data.get("psychological_room")
+    # For "No entity" value must be None
+    if psychological_room == "":
+        return json({"status": 403, "message": "psychological room is invalid"})
+    # Pull doctor room from the request
+    doctor_room = data.get("doctor_room")
+    # For "No entity" value must be None
+    if doctor_room == "":
+        return json({"status": 403, "message": "doctor room is invalid"})
 
     # Generate new token and name for the instance
     # @Important: 40 bytes token is > 50 characters long
@@ -119,7 +134,14 @@ async def worker_setup(request):
     config_obj = Config(new_token, url)
     tokens[name] = config_obj
     # Return useful data back to the caller
-    await database.create_session({"name": name, "token": new_token, "url": url})
+    await database.create_session({
+        "name": name,
+        "token": new_token,
+        "url": url,
+        "broadcast": broadcast_entity,
+        "psychological_room": psychological_room,
+        "doctor_room": doctor_room
+    })
     return json({"status": 200, "name": name, "token": new_token})
 
 
