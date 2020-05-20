@@ -1,7 +1,6 @@
-from enum import IntEnum
 
 
-class AccountType(IntEnum):
+class AccountType:
     COMMON = 1
     MEDIC = 2
     SOCIAL = 3

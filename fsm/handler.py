@@ -1,6 +1,8 @@
 from datetime import timedelta, datetime
+from typing import List
+
 from settings import settings, tokens
-from db_models import database, User
+from db_models import database, User, BroadcastMessage, Session
 from db_models import ServiceTypes
 from db_models import CheckBack
 import fsm.states as states
@@ -36,13 +38,30 @@ class Worker(threading.Thread):
     def run(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         loop = asyncio.get_event_loop()
-        # Background tasks
-        asyncio.ensure_future(self.handler.reminder_loop())
+        # Background tasks thread
+        BackgroundTasks(self.handler).start()
 
         loop.run_until_complete(self._run_processes())
 
     async def idle(self):
         await asyncio.sleep(self.timeout)
+
+
+class BackgroundTasks(threading.Thread):
+    def __init__(self, handler: "Handler"):
+        self.handler = handler
+        super(BackgroundTasks, self).__init__()
+
+    def run(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.get_event_loop()
+        # All tasks that should run
+        asyncio.ensure_future(self.all_tasks())
+        loop.run_forever()
+
+    async def all_tasks(self):
+        asyncio.ensure_future(self.handler.reminder_loop())
+        asyncio.ensure_future(self.handler.broadcast_loop())
 
 
 class Handler(object):
@@ -192,14 +211,14 @@ class Handler(object):
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
-        all_items_in_range = await self.db.all_in_range(now, until)
+        all_items_in_range = await self.db.all_checkbacks_in_range(now, until)
         async with aiohttp.ClientSession() as session:
             await asyncio.gather(*[self.send_reminder(checkback, session) for checkback in all_items_in_range])
 
     async def send_reminder(self, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
         try:
             # @Important: Introduce random sleep before sending the reminder
-            # @Important: so that reminders are sent on the range and front end is not overload
+            # @Important: so that reminders are sent over some timespan and front end is not overloaded
             random_sleep = random.randint(1, 60)
             logging.info(f"Sending checkback after {random_sleep} seconds")
             await asyncio.sleep(random_sleep)
@@ -227,3 +246,51 @@ class Handler(object):
             else:
                 logging.error(f"[ERROR]: Sending checkback (send_at={reminder['send_at']}, "
                               f"identity={reminder['identity']}) status {await response.text()}")
+
+    async def broadcast_loop(self) -> None:
+        try:
+            logging.info("Broadcast loop started")
+            while True:
+                now = self.db.now()
+                next_circle = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+                await asyncio.sleep((next_circle - now).total_seconds())
+                await self.schedule_broadcasts()
+        except asyncio.CancelledError:
+            logging.info("Broadcasts loop stopped")
+        except Exception as e:
+            logging.exception(f"Exception in broadcasts loop: {e}")
+
+    async def schedule_broadcasts(self):
+        count, all_items_in_range = await self.db.all_new_broadcasts()
+        # will raise ZeroDivisionError
+        if count == 0:
+            return
+        all_frontend_sessions = await self.db.all_frontend_sessions()
+        # Nowhere to send
+        if not all_frontend_sessions:
+            return
+        async with aiohttp.ClientSession() as session:
+            # Send broadcast in the next minute, but not all at the same time
+            send_at_list = [(60 / count) * i for i in range(count)]
+            await asyncio.gather(
+                *[
+                    self.send_broadcast(send_at, message, all_frontend_sessions, session)
+                    for send_at, message in
+                    zip(send_at_list, all_items_in_range)
+                ]
+            )
+
+    async def send_broadcast(self,
+                             send_at: float,
+                             broadcast_message: BroadcastMessage,
+                             frontend: List[Session],
+                             session: aiohttp.ClientSession):
+        await asyncio.sleep(send_at)
+        context = json.loads(broadcast_message["context"])
+        tasks = list()
+        for each_session in frontend:
+            context['chat']['chat_id'] = each_session['broadcast']
+            tasks.append(session.post(each_session['url'], json=context))
+        await asyncio.gather(*tasks)
+        # Remove done broadcast task
+        await self.db.remove_broadcast(broadcast_message)

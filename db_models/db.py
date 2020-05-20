@@ -1,5 +1,5 @@
 from settings import settings
-from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session
+from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session, BroadcastMessage
 from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from boto3.dynamodb.conditions import Key, Attr
 from server_logic.definitions import Context
@@ -13,6 +13,7 @@ import boto3
 import pytz
 import uuid
 import json
+
 
 def decimal_default(obj):
     if isinstance(obj, decimal.Decimal):
@@ -44,13 +45,13 @@ class DataBase:
         self.ConversationRequests = self.dynamodb.Table('ConversationRequests')
         self.CheckBacks = self.dynamodb.Table('CheckBacks')
         self.Sessions = self.dynamodb.Table('Sessions')
+        self.BroadcastMessages = self.dynamodb.Table('BroadcastMessages')
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
         self.mac = str(uuid.getnode())
     
         DataBase._initialized = True
-
 
     # High level methods
 
@@ -98,6 +99,32 @@ class DataBase:
     async def commit_user(self, user: User):
         self.Users.put_item(Item=user)
 
+    # Conversations
+    async def create_conversation(self, user: User, users: dict, type_: AccountType):
+        conv_id = str(uuid.uuid4())
+        self.Conversations.put_item(Item={
+            "id": conv_id,
+            "users": users,
+            "type": type_,
+            "created_at": self.now()
+        })
+        user['conversation_id'] = conv_id
+
+    async def get_conversation(self, user: User):
+        """Returns Conversation item by the user identity"""
+        try:
+            response = self.Conversations.get_item(
+                Key={
+                    'id': user['conversation_id']
+                }
+            )
+        except ClientError as e:
+            # Print Error Message and return None
+            logging.exception(e.response['Error']['Message'])
+        else:
+            # Return just item
+            return response['Item']
+
     # Conversation Requests
 
     # TODO: @Important: Still make methods async for now, because we don't
@@ -127,9 +154,8 @@ class DataBase:
                 }
             )
         except ClientError as e:
-            # TODO: @Important: Change all prints to logger.info or .error
             # Print Error Message and return None
-            print(e.response['Error']['Message'])
+            logging.exception(e.response['Error']['Message'])
         else:
             # Return just item
             return response['Item']
@@ -187,10 +213,10 @@ class DataBase:
             }
         )
 
-    async def all_in_range(self, now: datetime.datetime, until: datetime.datetime):
+    async def all_checkbacks_in_range(self, now: datetime.datetime, until: datetime.datetime):
         # TODO: @Important: query is limited to 1MB, so need to move to pagination eventually 
         response = self.CheckBacks.query(
-            IndexName = "time",
+            IndexName="time",
             ProjectionExpression="id, server_mac, send_at, context, #idtt",
             # Hide from reserved db keywords
             ExpressionAttributeNames={
@@ -232,6 +258,29 @@ class DataBase:
                 return
             # Return just item
             return response['Item']
+
+    async def all_frontend_sessions(self):
+        response = self.Sessions.scan()
+        return response['Items']
+
+    async def create_broadcast(self, context: Context):
+        self.BroadcastMessages.put_item(
+            Item={
+                "id": str(uuid.uuid4()),
+                "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default)
+            }
+        )
+
+    async def all_new_broadcasts(self):
+        response = self.BroadcastMessages.scan()
+        return response['Count'], response['Items']
+
+    async def remove_broadcast(self, item: BroadcastMessage):
+        self.BroadcastMessages.delete_item(
+            Key={
+                'id': item['id']
+            }
+        )
 
 
 database = DataBase(settings.DATABASE_URL)

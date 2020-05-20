@@ -41,7 +41,21 @@
 * send_at: `str`
 
 
+#### Session
+* name: `str` - primary key
+* token: `str`
+* url: `str`
+* broadcast: `Optional[int]`
+* psychological_room: `Optional[int]`
+* doctor_room: `Optional[int]`
+
+
+#### BroadcastMessage
+* id: `str` - primary key
+* context: `str`
+
+
 #### Message
 > probably worth saving all messages, if we ever plan to train rasa models
-* identity: `str`- primary key
+* identity: `str` - primary key
 * text: `str`

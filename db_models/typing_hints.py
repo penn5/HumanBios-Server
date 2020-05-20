@@ -1,6 +1,5 @@
 from typing import TypedDict, Dict, Union, List, Optional, Any
 from .enums import AccountType
-from datetime import datetime
 
 
 class User(TypedDict):
@@ -48,3 +47,11 @@ class Session(TypedDict):
     name: str
     token: str
     url: str
+    broadcast: Optional[int]
+    psychological_room: Optional[int]
+    doctor_room: Optional[int]
+
+
+class BroadcastMessage(TypedDict):
+    id: str
+    context: str

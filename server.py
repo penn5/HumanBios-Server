@@ -96,6 +96,44 @@ async def worker_setup(request):
     # Generate new token and pull url
     if not url:
         return json({"status": 403, "message": "url invalid"})
+    # check if session is already saved, then this means the frontend was restarted and we can ignore this
+    # TODO: Support a changed key where the instance can say that it didnt restart, rather changed the other variables. Potentially its own endpoint
+    check = False
+    # if its in the cache we take it from there
+    for session_name in tokens:
+        # for reasons we save the server token in this cache as well so we have to ignore it in here
+        if session_name == "server":
+            continue
+        if tokens[session_name].url == url:
+            check = session_name
+            break
+    # it was not in the cache, maybe its in the database
+    if not check:
+        all_sessions = await database.all_frontend_sessions()
+        for session in all_sessions:
+            # url is the unique identifier here
+            if session["url"] == url:
+                tokens[session["name"]] = Config(session["token"], session["url"])
+                check = session["name"]
+    # check is set to the new name which is way better then giving it its own variable
+    if check:
+        return json({"status": 200, "name": check, "token": tokens[check].token})
+    # continue setting up the new session
+    # Pull broadcast channel from the request
+    broadcast_entity = data.get("broadcast")
+    # For "No entity" value must be None
+    if broadcast_entity == "":
+        return json({"status": 403, "message": "broadcast entity is invalid"})
+    # Pull psychological room from the request
+    psychological_room = data.get("psychological_room")
+    # For "No entity" value must be None
+    if psychological_room == "":
+        return json({"status": 403, "message": "psychological room is invalid"})
+    # Pull doctor room from the request
+    doctor_room = data.get("doctor_room")
+    # For "No entity" value must be None
+    if doctor_room == "":
+        return json({"status": 403, "message": "doctor room is invalid"})
 
     # Generate new token and name for the instance
     # @Important: 40 bytes token is > 50 characters long
@@ -119,7 +157,14 @@ async def worker_setup(request):
     config_obj = Config(new_token, url)
     tokens[name] = config_obj
     # Return useful data back to the caller
-    await database.create_session({"name": name, "token": new_token, "url": url})
+    await database.create_session({
+        "name": name,
+        "token": new_token,
+        "url": url,
+        "broadcast": broadcast_entity,
+        "psychological_room": psychological_room,
+        "doctor_room": doctor_room
+    })
     return json({"status": 200, "name": name, "token": new_token})
 
 
