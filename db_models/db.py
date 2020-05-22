@@ -1,6 +1,5 @@
-from settings import settings
 from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session, BroadcastMessage
-from settings.settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+from settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DATABASE_URL
 from boto3.dynamodb.conditions import Key, Attr
 from server_logic.definitions import Context
 from botocore.exceptions import ClientError
@@ -50,8 +49,6 @@ class DataBase:
         self.active_conversations = 0
         self.requested_users = set()
         self.mac = str(uuid.getnode())
-    
-        DataBase._initialized = True
 
     # High level methods
 
@@ -231,7 +228,7 @@ class DataBase:
         # TODO:    requests and manage them; why *randomly*, to avoid different servers
         # TODO:    querying at exact same minute -> for that also probably worth to add
         # TODO:    "was_sent" bool to the structure.
-        return response['Items']
+        return response['Count'], response['Items']
 
     # Sessions
     async def create_session(self, item: Session):
@@ -283,4 +280,4 @@ class DataBase:
         )
 
 
-database = DataBase(settings.DATABASE_URL)
+database = DataBase(DATABASE_URL)

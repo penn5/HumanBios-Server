@@ -15,6 +15,8 @@ DATABASE_URL = os.environ['DATABASE_URL']
 AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
 AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 
+RASA_URL = os.environ['RASA_URL']
+
 N_CORES = int(os.environ['N_CORES'])
 try:
     DEBUG = bool(eval(os.environ['DEBUG']))
