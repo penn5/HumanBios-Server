@@ -201,7 +201,8 @@ class Handler(object):
             logging.info("Reminder loop started")
             while True:
                 now = self.db.now()
-                next_circle = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+                #next_circle = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+                next_circle = (now + timedelta(seconds=5)).replace(microsecond=0)
                 await asyncio.sleep((next_circle - now).total_seconds())
                 await self.schedule_nearby_reminders(next_circle)
         except asyncio.CancelledError:
@@ -211,17 +212,17 @@ class Handler(object):
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
-        all_items_in_range = await self.db.all_checkbacks_in_range(now, until)
+        count, all_items_in_range = await self.db.all_checkbacks_in_range(now, until)
+        # Send broadcast in the next minute, but not all at the same time
+        send_at_list = [(60 / count) * i for i in range(count)]
         async with aiohttp.ClientSession() as session:
-            await asyncio.gather(*[self.send_reminder(checkback, session) for checkback in all_items_in_range])
+            await asyncio.gather(*[self.send_reminder(send_at, checkback, session)
+                                   for send_at, checkback in zip(send_at_list, all_items_in_range)])
 
-    async def send_reminder(self, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
+    async def send_reminder(self, send_at: float, checkback: CheckBack, session: aiohttp.ClientSession) -> None:
         try:
-            # @Important: Introduce random sleep before sending the reminder
-            # @Important: so that reminders are sent over some timespan and front end is not overloaded
-            random_sleep = random.randint(1, 60)
-            logging.info(f"Sending checkback after {random_sleep} seconds")
-            await asyncio.sleep(random_sleep)
+            logging.info(f"Sending checkback after {send_at} seconds")
+            await asyncio.sleep(send_at)
             logging.info("Sending checkback")
             await self._send_reminder(checkback, session)
         except Exception as e:
