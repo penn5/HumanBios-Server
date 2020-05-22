@@ -144,16 +144,6 @@ async def worker_setup(request):
     name = secrets.token_hex(10)
     # [DEBUG]: assert len(name) == 20
 
-    # Save data on the server
-    # TODO: @Important|@Priority: 1) Make registration consistent in db -> allow reloading
-    #                                server (keeping front ends alive)
-    #                                Good approach will be syncing from db every X minutes (and on-load)
-    #                                Or some smarter trigger to keep db and this instance sync (e.g. trigger
-    #                                all instances and sync from database when new front end inst was added)
-    #                                Why this is important? Using database and load-balancer properly -> we
-    #                                can get few instances of the server running (each user assigned to one
-    #                                server in "session" manner so relevant cache works for each server inst)
-    # TODO: @Important:            2) Make front ends consistent -> allow reloading them too
     config_obj = Config(new_token, url)
     tokens[name] = config_obj
     # Return useful data back to the caller
