@@ -69,6 +69,7 @@ class Handler(object):
 
     def __init__(self):
         self.__start_state = "StartState"
+        self.__blogging_state = "BloggingState"
         self.__states = {}
         self.__register_states(*states.collect())
         self.db = database
@@ -161,6 +162,8 @@ class Handler(object):
             if text and text.startswith("/start"):
                 context['request']['message']['text'] = text[6:].strip()
                 return self.__start_state
+            elif text and text.startswith("/postme"):
+                return self.__blogging_state
         # defaults to __start_state
         try:
             return user['states'][-1]
