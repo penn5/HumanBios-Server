@@ -1,5 +1,5 @@
 from server_logic.definitions import Context, SenderTask
-from strings import Strings, StringAccessor
+from strings import Strings, StringAccessor, TextPromise
 from settings import tokens, ROOT_PATH
 from server_logic import NLUWorker
 from translation import Translator
@@ -8,6 +8,7 @@ from typing import List, Optional
 from db import User, Database
 import aiofiles
 import logging
+import json
 import os
 
 
@@ -33,6 +34,13 @@ class GO_TO_STATE:
 
     def __eq__(self, other):
         return self.status == other.status
+
+
+class PromisesEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, TextPromise):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
 
 
 class BaseState(object):
@@ -171,7 +179,10 @@ class BaseState(object):
         # Takes instance data holder object with the name from the tokens storage, extracts url
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
-        async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
+        async with session.post(url,
+                                json=json.dumps(task.context.to_dict(), cls=PromisesEncoder),
+                                headers=self.HEADERS
+                                ) as resp:
             # If reached server - log response
             if resp.status == 200:
                 pass  # [DEBUG]
