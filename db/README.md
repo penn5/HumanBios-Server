@@ -55,6 +55,13 @@
 * context: `str`
 
 
+#### TranslationItem
+* text: `str`
+* language: `str`
+* result_text: `str`
+* result_language: `str`
+
+
 #### Message
 > probably worth saving all messages, if we ever plan to train rasa models
 * identity: `str` - primary key

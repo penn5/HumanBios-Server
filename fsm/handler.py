@@ -1,11 +1,10 @@
+from db import Database, User, BroadcastMessage, Session
 from datetime import timedelta, datetime
-from typing import List
-
 from settings import settings, tokens
-from db_models import database, User, BroadcastMessage, Session
-from db_models import ServiceTypes
-from db_models import CheckBack
 import fsm.states as states
+from db import ServiceTypes
+from db import CheckBack
+from typing import List
 import threading
 import asyncio
 import aiohttp
@@ -71,7 +70,7 @@ class Handler(object):
         self.__start_state = "StartState"
         self.__states = {}
         self.__register_states(*states.collect())
-        self.db = database
+        self.db = Database()
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class
@@ -149,7 +148,7 @@ class Handler(object):
                 user
             )
         # Call process method of some state
-        ret_code = await current_state.wrapped_process(context, user, self.db)
+        ret_code = await current_state.wrapped_process(context, user)
         await self.__handle_ret_code(context, user, ret_code)
 
     # get last state of the user
@@ -191,9 +190,9 @@ class Handler(object):
             user = await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
 
         if current_state.has_entry:
-            ret_code = await current_state.wrapped_entry(context, user, self.db)
+            ret_code = await current_state.wrapped_entry(context, user)
         else:
-            ret_code = await current_state.wrapped_process(context, user, self.db)
+            ret_code = await current_state.wrapped_process(context, user)
         await self.__handle_ret_code(context, user, ret_code)
 
     async def reminder_loop(self) -> None:

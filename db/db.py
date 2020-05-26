@@ -1,11 +1,14 @@
-from .typing_hints import User, ConversationRequest, Conversation, CheckBack, Optional, Session, BroadcastMessage
+from .typing_hints import User, ConversationRequest, Conversation, CheckBack
 from settings import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DATABASE_URL
+from .typing_hints import Optional, Session, BroadcastMessage, StringItem
 from boto3.dynamodb.conditions import Key, Attr
 from server_logic.definitions import Context
 from botocore.exceptions import ClientError
+from typing import List, Dict, Iterable
 from .create_db import create_db
 from .enums import AccountType
 import datetime
+import asyncio
 import logging
 import decimal
 import boto3
@@ -20,20 +23,29 @@ def decimal_default(obj):
     raise TypeError
 
 
+def singleton(cls, *args, **kw):
+    instances = {}
+
+    def _singleton():
+        if cls not in instances:
+            instances[cls] = cls(*args, **kw)
+        return instances[cls]
+    return _singleton
+
+
 # TODO: Probably worth it to switch to async solution eventually but
 # TODO: right now, it's just PoC solution
-class DataBase:
+@singleton
+class Database:
     types = AccountType
-    _initialized = False
-    __instance = None
     LIMIT_CONCURRENT_CHATS = 100
     TZ = pytz.utc
 
-    def __init__(self, database_url="http://localhost:8000", region_name='eu-center-1'):
+    def __init__(self, database_url=None, region_name='eu-center-1'):
         self.dynamodb = boto3.resource(
             'dynamodb',
             region_name=region_name,
-            endpoint_url=database_url,
+            endpoint_url=database_url or DATABASE_URL,
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY
         )
@@ -45,6 +57,7 @@ class DataBase:
         self.CheckBacks = self.dynamodb.Table('CheckBacks')
         self.Sessions = self.dynamodb.Table('Sessions')
         self.BroadcastMessages = self.dynamodb.Table('BroadcastMessages')
+        self.StringItems = self.dynamodb.Table('StringItems')
         # Cache
         self.active_conversations = 0
         self.requested_users = set()
@@ -219,7 +232,8 @@ class DataBase:
             ExpressionAttributeNames={
                 "#idtt": "identity"
             },
-            KeyConditionExpression=Key("server_mac").eq(self.mac) & Key("send_at").between(now.isoformat(), until.isoformat())
+            KeyConditionExpression=Key("server_mac").eq(self.mac) & Key("send_at").between(now.isoformat(),
+                                                                                           until.isoformat())
         )
         # TODO: 1) Remove old checkbacks, BUT only after 1 hour or so (see 2)
         # TODO: 2) Eventually (after 10-45 minutes, *randomly*) look for checkbacks,
@@ -279,5 +293,36 @@ class DataBase:
             }
         )
 
+    # Translation
 
-database = DataBase(DATABASE_URL)
+    async def create_translation(self, item: StringItem):
+        self.StringItems.put_item(
+            Item=item
+        )
+
+    async def get_translation(self, lang: str, key: str):
+        """Returns User item by the user identity"""
+        try:
+            response = self.StringItems.get_item(
+                Key={
+                    'language': lang,
+                    'string_key': key
+                }
+            )
+        except ClientError as e:
+            # Print Error Message and return None
+            logging.exception(e.response['Error']['Message'])
+        else:
+            # If not exist -> return None
+            if not response.get('Item'):
+                return
+            # Return just item
+            return response['Item']
+
+    async def query_translations(self, lang: str, keys: Iterable[str]) -> List[StringItem]:
+        # A hack for the lack of better way
+        query = await asyncio.gather(*[self.get_translation(lang, key) for key in keys])
+        return query
+
+    async def bulk_save_translations(self, items: List[StringItem]):
+        await asyncio.gather(*[self.create_translation(item) for item in items])

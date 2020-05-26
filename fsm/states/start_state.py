@@ -1,5 +1,5 @@
 from server_logic.definitions import Context
-from db_models import ServiceTypes, User
+from db import ServiceTypes, User
 from . import base_state
 
 

@@ -1,6 +1,6 @@
 from server_logic.definitions import Context
 from strings.qa_module import get_next_question, get_user_scores, get_string, get_previous_question
-from db_models import ServiceTypes, User
+from db import ServiceTypes, User
 from datetime import timedelta
 from . import base_state
 import asyncio

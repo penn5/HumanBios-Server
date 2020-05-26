@@ -55,3 +55,17 @@ class Session(TypedDict):
 class BroadcastMessage(TypedDict):
     id: str
     context: str
+
+
+#class TranslationItem(TypedDict):
+#    text: str
+#    language: str
+#    result_text: str
+#    result_language: str
+
+
+class StringItem(TypedDict):
+    language: str
+    string_key: str
+    content_hash: str
+    text: str

@@ -1,6 +1,6 @@
 from server_logic.definitions import Context
-from db_models import User
 from . import base_state
+from db import User
 
 # TODO: Hardcoded order is bad (?), find a way to order everything
 # TODO: in json file, much like covapp, so we will be able to change
@@ -44,13 +44,7 @@ class BasicQuestionState(base_state.BaseState):
         else:
             # @Important: Default starting state
             user['context']['bq_state'] = 1
-            # Send language message
-            context['request']['message']['text'] = self.strings["choose_lang"]
-            context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
-            context['request']['has_buttons'] = True
-            # Don't forget to add task
-            self.send(user, context)
-            return base_state.OK
+            return await self.process(context, user, db)
 
     async def process(self, context, user: User, db):
         # Take key associated with state
@@ -65,29 +59,7 @@ class BasicQuestionState(base_state.BaseState):
         free_answers = ["story", "helping", "location", "selfie", "coughing"]
         # If choose language (first) state
         if key == "choose_lang":
-            # Cut data to extract language (e.g. `lang-en` -> `en`)
-            # TODO: 1) Change language buttons data to avoid cutting, make them just `en` etc
-            # TODO: 2) Due to current implementation on the front-end (see 1), raises NoneType error
-            # TODO:    when users enters invalid input with inline buttons
-            # TODO: @Important: Also, make sure user input is not too short to break the code
-            try:
-                language = raw_text[5:]
-            except:
-                language = ""
-            # If user input is not in the languages -> return error message
-            if language not in self.LANGUAGES:
-                context['request']['message']['text'] = self.strings["qa_error"]
-                context['request']['buttons_type'], context['request']['buttons'] = self.lang_keyboard()
-                context['request']['has_buttons'] = True
-                # Don't forget to add task
-                self.send(user, context)
-                return base_state.OK
-            else:
-                # If legit language -> save language to the user
-                user['language'] = language
-                # @Important: And set current context to the new language
-                # @Important: (Will be done automatically with the next event)
-                self.set_language(user['language'])
+            return base_state.GO_TO_STATE("LanguageDetectionState")
         # Recording the answers, if skipped first two steps
         elif raw_text != self.strings['skip']:
             # @Important: If user sends selfie - download the image

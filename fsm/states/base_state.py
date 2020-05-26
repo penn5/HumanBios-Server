@@ -1,11 +1,12 @@
 from server_logic.definitions import Context, SenderTask
+from strings import Strings, StringAccessor
 from settings import tokens, ROOT_PATH
+from server_logic import NLUWorker
 from translation import Translator
 from aiohttp import ClientSession
-from strings import strings_text
-from db_models import User
+from typing import List, Optional
+from db import User, Database
 import aiofiles
-import asyncio
 import logging
 import os
 
@@ -40,15 +41,11 @@ class BaseState(object):
     }
     # This variable allows to ignore `entry()` when needed
     has_entry = True
-    # All translations
-    # TODO: Rework it so only cache and request new translation (from en) when needed
-    #       this will allow us to eventually use rasa for language recognition
-    #       with google language detection to provide the best language choice experience
-    __STRINGS = strings_text
-    # ALL languages
-    LANGUAGES = strings_text.keys()
-    # @Important: instantiate translator
-    TRANSLATOR = Translator()
+    # @Important: instantiate important classes
+    tr = Translator()
+    db = Database()
+    nlu = NLUWorker(tr)
+    STRINGS = Strings(tr)
     # Media path and folder
     media_folder = "media"
     media_path = os.path.join(ROOT_PATH, media_folder)
@@ -61,17 +58,8 @@ class BaseState(object):
         # Keeps list of tasks
         self.tasks = list()
         # Create language variable
-        self.__language = 'en'
-
-    @property
-    def strings(self):
-        """
-        This property simplifies the access to strings
-
-        Returns:
-            dict: strings of the user language
-        """
-        return self.__STRINGS[self.__language]
+        self.__language = None
+        self.strings = None
 
     def set_language(self, value: str):
         """
@@ -82,16 +70,19 @@ class BaseState(object):
             value (str): language code of the user's country
         """
         self.__language = value or "en"
+        self.strings = StringAccessor(self.__language, self.STRINGS)
 
-    async def wrapped_entry(self, context: Context, user: User, db):
-        # Prepare language for state
+    async def wrapped_entry(self, context: Context, user: User):
+        # Set language
         self.set_language(user['language'])
         # Execute state method
-        status = await self.entry(context, user, db)
+        status = await self.entry(context, user, self.db)
         # Commit changes to database
         if status.commit:
-            await db.commit_user(user=user)
-
+            await self.db.commit_user(user=user)
+        # @Important: Fulfill text promises
+        if self.strings.promises:
+            await self.strings.fill_promises()
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
         if self.tasks:
@@ -99,15 +90,17 @@ class BaseState(object):
             _results = await self.collect(user, context)
         return status
 
-    async def wrapped_process(self, context: Context, user: User, db):
-        # Prepare language for state
+    async def wrapped_process(self, context: Context, user: User):
+        # Set language
         self.set_language(user['language'])
         # Execute state method
-        status = await self.process(context, user, db)
+        status = await self.process(context, user, self.db)
         # Commit changes to database
         if status.commit:
-            await db.commit_user(user=user)
-
+            await self.db.commit_user(user=user)
+        # @Important: Fulfill text promises
+        if self.strings.promises:
+            await self.strings.fill_promises()
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
         if self.tasks:
@@ -155,7 +148,7 @@ class BaseState(object):
     # @Important: because a) it's not good enough, b) it takes time to make
     # @Important: a call to the google cloud api
     async def translate(self, target: str, text: str) -> str:
-        return await self.TRANSLATOR.translate_text(target, text)
+        return await self.tr.translate_text(target, text)
 
     # Sugar
 
