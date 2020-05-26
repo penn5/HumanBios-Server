@@ -57,7 +57,7 @@ class Strings:
     for each_key in __strings:
         original_strings[each_key] = {
             "text": __strings[each_key],
-            "hash": hashlib.sha1(__strings[each_key]).hexdigest()
+            "hash": hashlib.sha1(__strings[each_key].encode()).hexdigest()
         }
     db = Database()
     cache = {'en': __strings}
