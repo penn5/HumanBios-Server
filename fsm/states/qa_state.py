@@ -123,7 +123,7 @@ class QAState(base_state.BaseState):
                 next_q_id = curr_q.answers[raw_answer]
         else:
             next_q = get_previous_question(user['identity'], user['language'], curr_q.id)
-            if next_q is None:
+            if not next_q:
                 user['context']['bq_state'] = 4
                 return base_state.GO_TO_STATE("BasicQuestionState")
             next_q_id = next_q.id
