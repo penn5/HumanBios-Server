@@ -20,7 +20,6 @@ class LanguageDetectionState(base_state.BaseState):
         raw_answer = context['request']['message']['text']
         failed = True
         button = self.parse_button(raw_answer)
-        logging.info(button)
 
         if button == 'stop':
             # Jump from current state to final `end` state
