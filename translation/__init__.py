@@ -48,8 +48,9 @@ class Translator:
             'format': 'text',
             'q': text
         }
+        # logging.info(data)
         result = await self.__get_json(self.TRANSLATION_URL, data, self.HEADERS, session)
-        logging.info(result)
+        # logging.info(result)
         return result['data']['translations'][0]['translatedText']
 
     async def translate_dict(self, target: str, texts: dict, from_lang: str = 'en'):

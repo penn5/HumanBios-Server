@@ -1,6 +1,7 @@
 from server_logic.definitions import Context
 from db import User
 from . import base_state
+import logging
 
 
 class LanguageDetectionState(base_state.BaseState):
@@ -18,8 +19,10 @@ class LanguageDetectionState(base_state.BaseState):
     async def process(self, context: Context, user: User, db):
         raw_answer = context['request']['message']['text']
         failed = True
+        button = self.parse_button(raw_answer)
+        logging.info(button)
 
-        if raw_answer == self.strings['stop']:
+        if button == 'stop':
             # Jump from current state to final `end` state
             return base_state.GO_TO_STATE("ENDState")
 
@@ -39,6 +42,7 @@ class LanguageDetectionState(base_state.BaseState):
                 return base_state.OK
 
             # Update current context
+            user['language'] = language_obj['iso639_1']
             self.set_language(language_obj['iso639_1'])
 
             # Ask if user wants to continue with the language
@@ -55,10 +59,13 @@ class LanguageDetectionState(base_state.BaseState):
             return base_state.OK
 
         elif user['context'].get('language_state') == 2:
-            if raw_answer == self.strings['continue']:
+            if button == 'continue':
                 return base_state.GO_TO_STATE("BasicQuestionState")
-            elif raw_answer == self.strings['try_again']:
+            elif button == 'try_again':
                 failed = False
+                user['language'] = 'en'
+                self.set_language('en')
+                
 
         if failed:
             # Failed to recognise the answer -> fail message path

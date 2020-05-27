@@ -32,7 +32,9 @@ class NLUWorker:
             # If user sent message in his own language and we figured out what is it - case closed
             if language != "en":
                 logging.info(f"Translator detected language: ({text})[{language}]")
-                return iso639.find(language)
+                language = iso639.find(language)
+            else:
+                language = None
             # 2) Try to detect entity using rasa nlu
             async for each_entity in self._detect_entities(text, http):
                 if each_entity.entity in ['language_code', 'language_name']:
@@ -41,4 +43,4 @@ class NLUWorker:
                     return raw_language_obj
             else:
                 # Will return None if not detected any
-                return
+                return language

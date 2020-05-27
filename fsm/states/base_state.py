@@ -1,5 +1,5 @@
 from server_logic.definitions import Context, SenderTask
-from strings import Strings, StringAccessor, TextPromise
+from strings import Strings, StringAccessor, TextPromise, Button
 from settings import tokens, ROOT_PATH
 from server_logic import NLUWorker
 from translation import Translator
@@ -8,6 +8,7 @@ from typing import List, Optional
 from db import User, Database
 import aiofiles
 import logging
+import copy
 import json
 import os
 
@@ -124,6 +125,14 @@ class BaseState(object):
     async def process(self, context: Context, user: User, db):
         return OK
 
+    def parse_button(self, raw_text: str) -> Button:
+        btn = Button(raw_text)
+        for key, value in self.STRINGS.cache[self.__language].items():
+            if value == raw_text:
+                btn.set_key(key)
+                break
+        return btn
+
     # @Important: 1) find better way with database
     # @Important: 2) What if we do it in non blocking asyncio.create_task (?)
     # @Important:    But on the other hand, we can't relay on the file status
@@ -204,4 +213,4 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
-        self.tasks.append(SenderTask(to_user, context.__dict__))
+        self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))

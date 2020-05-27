@@ -13,6 +13,7 @@ class BloggingState(base_state.BaseState):
     has_entry = False
 
     async def process(self, context: Context, user: User, db):
+
         if "blogging" not in user["context"]:
             user["context"]["blogging"] = "start"
             user["context"]["blogging_state"] = user["states"][-1]

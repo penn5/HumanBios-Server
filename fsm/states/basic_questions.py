@@ -34,10 +34,23 @@ class BasicQuestionState(base_state.BaseState):
             return base_state.OK
             # If returning to the state from somewhere, with current_state -> continue
         elif user['context'].get("bq_state") == 4:
-            # Send location message
+            # Send medical message
             context['request']['message']['text'] = self.strings["medical"]
             context['request']['has_buttons'] = True
             context['request']['buttons_type'], context['request']['buttons'] = self.simple_keyboard()
+            # Don't forget to add task
+            self.send(user, context)
+            return base_state.OK
+        elif user['context'].get("bq_state") == 1:
+            # Send disclaimer message
+            context['request']['message']['text'] = self.strings["disclaimer"]
+            context['request']['has_buttons'] = True
+            context['request']['buttons_type'] = "text"
+            context['request']['buttons'] = [
+                {"text": self.strings['accept']}, {"text": self.strings['reject']},
+                {"text": self.strings['back']}, {"text": self.strings['stop']}
+            ]
+            user['context']['bq_state'] += 1
             # Don't forget to add task
             self.send(user, context)
             return base_state.OK
@@ -51,9 +64,7 @@ class BasicQuestionState(base_state.BaseState):
         key = ORDER.get(user['context']['bq_state'])
         # Raw text alias
         raw_text: str = context['request']['message']['text']
-        # [DEBUG]:
-        # if key in ['location', 'selfie', 'coughing']:
-        #    print(key, context)
+        button = self.parse_button(raw_text)        
 
         # Dialog steps that require non-trivial/free input
         free_answers = ["story", "helping", "location", "selfie", "coughing"]
@@ -61,7 +72,7 @@ class BasicQuestionState(base_state.BaseState):
         if key == "choose_lang":
             return base_state.GO_TO_STATE("LanguageDetectionState")
         # Recording the answers, if skipped first two steps
-        elif raw_text != self.strings['skip']:
+        elif button != 'skip':
             # @Important: If user sends selfie - download the image
             if key == "selfie" and context['request']['has_image']:
                 # TODO: Store all users input `properly`
@@ -91,14 +102,14 @@ class BasicQuestionState(base_state.BaseState):
             else:
                 # Set of buttons, according user's language
                 if key == "disclaimer":
-                    common_buttons = [self.strings['accept'], self.strings['reject']]
+                    common_buttons = ['accept', 'reject']
                 else:
-                    common_buttons = [self.strings['yes'], self.strings['no']]
+                    common_buttons = ['yes', 'no']
                 # Add key buttons all the time
-                common_buttons += [self.strings['back'], self.strings['stop']]
+                common_buttons += ['back', 'stop']
                 # Check if the question has strictly typed answer AND
                 # it is one of the answers (buttons)
-                if key not in free_answers and raw_text not in common_buttons:
+                if key not in free_answers and button not in common_buttons:
                     # Tell user about invalid input
                     context['request']['message']['text'] = self.strings['qa_error']
                     self.send(user, context)
@@ -110,7 +121,7 @@ class BasicQuestionState(base_state.BaseState):
                     return base_state.OK
                 # @Important: tracking (saving) user input
                 # Make sure not to track `back` button
-                if raw_text not in [self.strings['back'], self.strings['stop']]:
+                if button not in ['back', 'stop']:
                     # TODO: Make sure to download links etc
                     # If current question is `location` -> save to the user data
                     if key == 'location':
@@ -124,7 +135,7 @@ class BasicQuestionState(base_state.BaseState):
         # Bonus value to skip one state
         bonus_value = 0
         # Denied disclaimer (or end of conv)
-        if (key == "disclaimer" or key == "wanna_help") and raw_text == self.strings['reject']:
+        if (key == "disclaimer" or key == "wanna_help") and button == 'reject':
             context['request']['message']['text'] = self.strings["bye"]
             context['request']['buttons'] = []
             context['request']['has_buttons'] = False
@@ -138,25 +149,25 @@ class BasicQuestionState(base_state.BaseState):
             user['states'] = ["StartState"]
             return base_state.OK
         # if not medical -> jump to `stressed` question
-        elif key == "medical" and raw_text == self.strings['no']:
+        elif key == "medical" and button == 'no':
             # Add one to the state, so state will jump as we want (change in order will break it)
             bonus_value = 1
         # if not stressed -> jump to `wanna_help`
-        elif key == "stressed" and raw_text == self.strings['no']:
+        elif key == "stressed" and button == 'no':
             bonus_value = 1
         # @Important: create social request
-        elif key == "mental" and raw_text == self.strings['yes']:
+        elif key == "mental" and button == 'yes':
             #donotrepeatyourcode
             return self.request_method(context, user, db.types.SOCIAL, "forward_shrink")
         # @Important: if coughing (last state) -> request doctor conversation
         elif key == "coughing":
             return self.request_method(context, user, db.types.MEDIC, "forward_doctor")
-        elif key == "helping" and raw_text == self.strings['yes']:
+        elif key == "helping" and button == 'yes':
             # TODO: Is not implemented yet
             return base_state.GO_TO_STATE("AFKState")
 
         # Back button
-        if raw_text == self.strings['back']:
+        if button == 'back':
             # Ensure jump from `location` -> `covapp QA`
             if key == "QA_TRIGGER":
                 # Set to the qa state
@@ -165,7 +176,7 @@ class BasicQuestionState(base_state.BaseState):
                 # else go one step back
                 user['context']['bq_state'] -= 1
         # Stop button
-        elif raw_text == self.strings['stop']:
+        elif button == 'stop':
             # Jump from current state to final `end` state
             return base_state.GO_TO_STATE("ENDState")
         # TODO: Add conditional `skip` button
