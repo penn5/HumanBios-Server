@@ -1,5 +1,6 @@
 from settings import CLOUD_TRANSLATION_API_KEY
 from aiohttp import ClientSession
+import logging
 import asyncio
 import ujson
 
@@ -33,7 +34,8 @@ class Translator:
         }
         result = await self.__get_json(self.DETECTION_URL, data, self.HEADERS, session)
         # Schema: [[{LANG}], ...], where LANG: {"language": "en"}
-        return result['detections'][0][0]["language"]
+        # logging.info(result)
+        return result['data']['detections'][0][0]["language"]
 
     async def translate_text(self,
                              text: str,
@@ -47,13 +49,14 @@ class Translator:
             'q': text
         }
         result = await self.__get_json(self.TRANSLATION_URL, data, self.HEADERS, session)
+        logging.info(result)
         return result['data']['translations'][0]['translatedText']
 
     async def translate_dict(self, target: str, texts: dict, from_lang: str = 'en'):
         new_texts = dict()
         async with ClientSession() as session:
             for key, each_text in texts.items():
-                new_text: str = await self.translate_text(target, each_text, session)
+                new_text: str = await self.translate_text(each_text, target, session)
                 #:< Hacks
                 new_text = new_text.replace("& deg;", "°")
                 #

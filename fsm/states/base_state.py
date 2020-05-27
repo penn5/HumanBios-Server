@@ -95,7 +95,7 @@ class BaseState(object):
         # @Important: the call is actually needed
         if self.tasks:
             # @Important: collect all requests
-            _results = await self.collect(user, context)
+            _results = await self.collect()
         return status
 
     async def wrapped_process(self, context: Context, user: User):
@@ -113,7 +113,7 @@ class BaseState(object):
         # @Important: the call is actually needed
         if self.tasks:
             # @Important: collect all requests
-            _results = await self.collect(user, context)
+            _results = await self.collect()
         return status
 
     # Actual state method to be written for the state
@@ -155,15 +155,15 @@ class BaseState(object):
     # @Important: note, though, that we shouldn't abuse translation api
     # @Important: because a) it's not good enough, b) it takes time to make
     # @Important: a call to the google cloud api
-    async def translate(self, target: str, text: str) -> str:
-        return await self.tr.translate_text(target, text)
+    async def translate(self, text: str, target: str) -> str:
+        return await self.tr.translate_text(text, target)
 
     # Sugar
 
     # @Important: command to actually send all collected requests from `process` or `entry`
-    async def collect(self, user: User, context: Context):
+    async def collect(self):
         results = list()
-        async with ClientSession() as session:
+        async with ClientSession(json_serialize=lambda o: json.dumps(o, cls=PromisesEncoder)) as session:
             # @Important: Since asyncio.gather order is not preserved, we don't want to run them concurrently
             # tasks = [self._send(task, session) for task in self.tasks[id(context)]]
             # group = asyncio.gather(*tasks)
@@ -180,7 +180,7 @@ class BaseState(object):
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
         async with session.post(url,
-                                json=json.dumps(task.context.to_dict(), cls=PromisesEncoder),
+                                json=task.context['request'],
                                 headers=self.HEADERS
                                 ) as resp:
             # If reached server - log response
@@ -194,7 +194,7 @@ class BaseState(object):
                 #    logging.info(f"Sending task status: No result")
             # Otherwise - log error
             else:
-                logging.error(f"[ERROR]: Sending task ({task}) status {await resp.text()}")
+                logging.error(f"[ERROR]: Sending task (user={task.user}, context={task.context['request']}) status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
@@ -204,4 +204,4 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
-        self.tasks.append(SenderTask(to_user, context.deepcopy()))
+        self.tasks.append(SenderTask(to_user, context.__dict__))

@@ -5,6 +5,7 @@ from hashlib import sha1
 from db import Database
 import asyncio
 import hashlib
+import logging
 import json
 import os
 
@@ -30,7 +31,7 @@ class TextPromise:
 
     def __str__(self):
         if self._format_data is not None:
-            self.value.format(self._format_data)
+            self.value = self.value.format(self._format_data)
         return self.value
 
 
@@ -48,7 +49,7 @@ class StringAccessor:
     async def fill_promises(self):
         translations = await self.strings.get_translations(self.lang, set(prom.key for prom in self.promises))
         for each_promise in self.promises:
-            each_promise.value = translations[each_promise.key]
+            each_promise.fill(translations[each_promise.key])
 
 
 class Strings:
