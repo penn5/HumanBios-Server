@@ -39,6 +39,9 @@ class NLUWorker:
             async for each_entity in self._detect_entities(text, http):
                 if each_entity.entity in ['language_code', 'language_name']:
                     raw_language_obj = iso639.find(each_entity.value)
+                    # False positive from rasa (maybe add some strings comparison later
+                    if raw_language_obj is None:
+                        continue
                     logging.info(f"NLU model detected language: ({text})[{raw_language_obj['name']}]")
                     return raw_language_obj
             else:

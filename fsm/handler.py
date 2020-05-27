@@ -158,11 +158,13 @@ class Handler(object):
         # TELEGRAM SPECIAL CASES
         if context['request']['service_in'] == ServiceTypes.TELEGRAM:
             text = context['request']['message']['text']
-            if text and text.startswith("/start"):
-                context['request']['message']['text'] = text[6:].strip()
-                return self.__start_state
-            elif text and text.startswith("/postme"):
-                return self.__blogging_state
+            if isinstance(text, str) or hasattr(text, "value"):
+                text = str(text)
+                if text.startswith("/start"):
+                    context['request']['message']['text'] = text[6:].strip()
+                    return self.__start_state
+                if  text.startswith("/postme"):
+                    return self.__blogging_state
         # defaults to __start_state
         try:
             return user['states'][-1]
@@ -204,7 +206,7 @@ class Handler(object):
             while True:
                 now = self.db.now()
                 #next_circle = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-                next_circle = (now + timedelta(seconds=5)).replace(microsecond=0)
+                next_circle = (now + timedelta(seconds=10)).replace(microsecond=0)
                 await asyncio.sleep((next_circle - now).total_seconds())
                 await self.schedule_nearby_reminders(next_circle)
         except asyncio.CancelledError:
@@ -213,7 +215,8 @@ class Handler(object):
             logging.exception(f"Exception in reminder loop: {e}")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
-        until = now + timedelta(minutes=1)
+        #until = now + timedelta(minutes=1)
+        until = now + timedelta(seconds=10)
         count, all_items_in_range = await self.db.all_checkbacks_in_range(now, until)
         # Send broadcast in the next minute, but not all at the same time
         send_at_list = [(60 / count) * i for i in range(count)]

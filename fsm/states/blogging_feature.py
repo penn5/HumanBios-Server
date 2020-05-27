@@ -53,5 +53,5 @@ class BloggingState(base_state.BaseState):
             del user["context"]["blogging"]
             text = self.strings["broadcast_message"].format(user["first_name"]) + user['answers']["story"]
             context["request"]["message"]["text"] = text
-            await db.create_broadcast(context)
+            self.create_task(db.create_broadcast, context)
             return base_state.GO_TO_STATE(user["context"]["blogging_state"])

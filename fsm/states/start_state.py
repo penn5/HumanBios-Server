@@ -35,4 +35,4 @@ class StartState(base_state.BaseState):
                     user['files']['profile_picture'] = path
         # Edit context to not have file
         context['request']['has_file'] = False
-        return base_state.GO_TO_STATE("BasicQuestionState")
+        return base_state.GO_TO_STATE("LanguageDetectionState")

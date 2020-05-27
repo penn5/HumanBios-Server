@@ -1,4 +1,4 @@
-from server_logic.definitions import Context, SenderTask
+from server_logic.definitions import Context, SenderTask, ExecutionTask
 from strings import Strings, StringAccessor, TextPromise, Button
 from settings import tokens, ROOT_PATH
 from server_logic import NLUWorker
@@ -7,6 +7,7 @@ from aiohttp import ClientSession
 from typing import List, Optional
 from db import User, Database
 import aiofiles
+import asyncio
 import logging
 import copy
 import json
@@ -54,7 +55,7 @@ class BaseState(object):
     tr = Translator()
     db = Database()
     nlu = NLUWorker(tr)
-    STRINGS = Strings(tr)
+    STRINGS = Strings(tr, db)
     # Media path and folder
     media_folder = "media"
     media_path = os.path.join(ROOT_PATH, media_folder)
@@ -66,6 +67,8 @@ class BaseState(object):
     def __init__(self):
         # Keeps list of tasks
         self.tasks = list()
+        # Keeps execution queue
+        self.execution_queue = list()
         # Create language variable
         self.__language = None
         self.strings = None
@@ -97,6 +100,9 @@ class BaseState(object):
         if self.tasks:
             # @Important: collect all requests
             _results = await self.collect()
+        # @Important: Execute all queued jobs
+        if self.execution_queue:
+            await self.execute_tasks()
         return status
 
     async def wrapped_process(self, context: Context, user: User):
@@ -114,7 +120,10 @@ class BaseState(object):
         # @Important: the call is actually needed
         if self.tasks:
             # @Important: collect all requests
-            _results = await self.collect()
+            await self.collect()
+        # @Important: Execute all queued jobs
+        if self.execution_queue:
+            await self.execute_tasks()
         return status
 
     # Actual state method to be written for the state
@@ -214,3 +223,12 @@ class BaseState(object):
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
         self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
+
+    async def execute_tasks(self):
+        results = await asyncio.gather(
+            *[exec_task.func(*exec_task.args, **exec_task.kwargs) for exec_task in self.execution_queue]
+        )
+        return results
+
+    def create_task(self, func, *args, **kwargs):
+        self.execution_queue.append(ExecutionTask(func, args, kwargs))

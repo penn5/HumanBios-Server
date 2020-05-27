@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 from typing import List, Dict, Iterable
 from .create_db import create_db
 from .enums import AccountType
+from strings.items import TextPromise
 import datetime
 import asyncio
 import logging
@@ -17,9 +18,11 @@ import uuid
 import json
 
 
-def decimal_default(obj):
+def custom_default(obj):
     if isinstance(obj, decimal.Decimal):
         return float(obj)
+    elif isinstance(obj, TextPromise):
+        return str(obj)
     raise TypeError
 
 
@@ -218,7 +221,7 @@ class Database:
                 "id": str(uuid.uuid4()),
                 "server_mac": str(uuid.getnode()),
                 "identity": context['request']['user']['identity'],
-                "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default),
+                "context": json.dumps(context.__dict__['request'], default=custom_default),
                 "send_at": (self.now() + send_in).isoformat()
             }
         )
@@ -278,7 +281,7 @@ class Database:
         self.BroadcastMessages.put_item(
             Item={
                 "id": str(uuid.uuid4()),
-                "context": json.dumps((context.deepcopy()).to_dict(), default=decimal_default)
+                "context": json.dumps(context.__dict__['request'], default=custom_default)
             }
         )
 
