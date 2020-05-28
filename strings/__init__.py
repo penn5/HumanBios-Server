@@ -1,7 +1,6 @@
 from typing import TypedDict, List, Dict, Union, Set, Iterable
 from translation import Translator
 from settings import ROOT_PATH
-from hashlib import sha1
 from .items import TextPromise, Button
 import asyncio
 import hashlib
@@ -47,6 +46,8 @@ class Strings:
     def __init__(self, translation: Translator, db):
         self.tr = translation
         self.db = db
+        # Create task to load everything from db to cache on server start-up
+        self.load_everything()
 
     def __getitem__(self, key: str):
         return self.cache[key]
@@ -113,3 +114,16 @@ class Strings:
         else:
             self.cache[lang] = result
         return result
+
+    async def _load_everything(self):
+        count = 0
+        async for each_translation in self.db.iter_all_translation():
+            if self.cache.get(each_translation.language):
+                self.cache[each_translation['language']][each_translation['string_key']] = each_translation['text']
+            else:
+                self.cache[each_translation['language']] = {each_translation['string_key']}
+            count += 1
+        logging.info(f"Loaded {count} translated items from database.")
+
+    def load_everything(self):
+        asyncio.ensure_future(self._load_everything())

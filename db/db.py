@@ -4,7 +4,7 @@ from .typing_hints import Optional, Session, BroadcastMessage, StringItem
 from boto3.dynamodb.conditions import Key, Attr
 from server_logic.definitions import Context
 from botocore.exceptions import ClientError
-from typing import List, Dict, Iterable
+from typing import List, Dict, Iterable, AsyncGenerator
 from .create_db import create_db
 from .enums import AccountType
 from strings.items import TextPromise
@@ -329,3 +329,13 @@ class Database:
 
     async def bulk_save_translations(self, items: List[StringItem]):
         await asyncio.gather(*[self.create_translation(item) for item in items])
+
+    async def iter_all_translation(self) -> AsyncGenerator[StringItem]:
+        response = self.StringItems.scan()
+        for each_translation in response['Items']:
+            yield each_translation
+
+        while 'LastEvaluatedKey' in response:
+            response = self.StringItems.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            for each_translation in response['Items']:
+                yield each_translation
