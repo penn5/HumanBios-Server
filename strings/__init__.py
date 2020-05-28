@@ -46,9 +46,8 @@ class Strings:
     def __init__(self, translation: Translator, db):
         self.tr = translation
         self.db = db
-        # Create task to load everything from db to cache on server start-up
-        self.load_everything()
-
+        asyncio.run(self.load_everything())
+    
     def __getitem__(self, key: str):
         return self.cache[key]
 
@@ -115,15 +114,12 @@ class Strings:
             self.cache[lang] = result
         return result
 
-    async def _load_everything(self):
+    async def load_everything(self):
         count = 0
         async for each_translation in self.db.iter_all_translation():
-            if self.cache.get(each_translation.language):
+            if self.cache.get(each_translation['language']):
                 self.cache[each_translation['language']][each_translation['string_key']] = each_translation['text']
             else:
-                self.cache[each_translation['language']] = {each_translation['string_key']}
+                self.cache[each_translation['language']] = {each_translation['string_key']: each_translation['text']}
             count += 1
         logging.info(f"Loaded {count} translated items from database.")
-
-    def load_everything(self):
-        asyncio.ensure_future(self._load_everything())

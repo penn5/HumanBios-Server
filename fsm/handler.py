@@ -59,8 +59,11 @@ class BackgroundTasks(threading.Thread):
         loop.run_forever()
 
     async def all_tasks(self):
+        # Reminder loop
         asyncio.ensure_future(self.handler.reminder_loop())
+        # Broadcast messages loop
         asyncio.ensure_future(self.handler.broadcast_loop())
+        
 
 
 class Handler(object):
