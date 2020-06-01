@@ -136,10 +136,12 @@ class BaseState(object):
 
     def parse_button(self, raw_text: str) -> Button:
         btn = Button(raw_text)
-        for key, value in self.STRINGS.cache[self.__language].items():
-            if value == raw_text:
-                btn.set_key(key)
-                break
+        lang_obj = self.STRINGS.cache.get(self.__language)
+        if lang_obj is not None:
+            for key, value in lang_obj.items():
+                if value == raw_text:
+                    btn.set_key(key)
+                    break
         return btn
 
     # @Important: 1) find better way with database

@@ -196,7 +196,7 @@ class BasicQuestionState(base_state.BaseState):
         # @Important: set buttons to the language names (edge case)
         elif key == "choose_lang":
             # Change also button type to inline
-            btn_type, buttons = self.lang_keyboard()
+            return base_state.GO_TO_STATE("LanguageDetectionState")
         # @Important: If question is `disclaimer` - set special buttons
         elif key == "disclaimer":
             buttons = [{"text": self.strings['accept']}, {"text": self.strings['reject']},
@@ -241,17 +241,6 @@ class BasicQuestionState(base_state.BaseState):
             {
                 "text": self.strings['stop']
             }
-        ]
-
-    # Buttons of all possible languages
-    # TODO: Also make sure to make them into proper 2D matrix
-    def lang_keyboard(self):
-        return "inline", [
-            {
-                "text": key,
-                "value": f"lang_{key}"
-            }
-            for key in self.LANGUAGES
         ]
 
     # @Important: shortcut method for few actions

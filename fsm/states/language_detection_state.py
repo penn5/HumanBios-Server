@@ -40,6 +40,23 @@ class LanguageDetectionState(base_state.BaseState):
                 self.send(user, context)
                 return base_state.OK
 
+            if isinstance(language_obj, list) and len(language_obj) != 1:
+                user['context']['language_state'] = 3
+                user['context']['language_obj'] = {lang['native']: lang['iso639_1'] for lang in language_obj}
+                # Ask what language user wants
+                context['request']['message']['text'] = self.strings['choose_lang_country_based']
+                context['request']['has_buttons'] = True
+                context['request']['buttons_type'] = "text"
+                context['request']['buttons'] = [
+                    *({"text": lang['native']} for lang in language_obj),
+                    {"text": self.strings['stop']},
+                    {"text": self.strings['try_again']}
+                ]
+                self.send(user, context)
+                return base_state.OK
+            elif isinstance(language_obj, list):
+                language_obj = language_obj[0]
+
             # Update current context
             user['language'] = language_obj['iso639_1']
             self.set_language(language_obj['iso639_1'])
@@ -64,7 +81,13 @@ class LanguageDetectionState(base_state.BaseState):
                 failed = False
                 user['language'] = 'en'
                 self.set_language('en')
-                
+        elif user['context'].get('language_state') == 3:
+            lang = user['context']['language_obj'].get(raw_answer)
+            if lang is not None:
+                user['language'] = lang
+                return base_state.GO_TO_STATE("BasicQuestionState")
+            elif button == 'try_again':
+                failed = False
 
         if failed:
             # Failed to recognise the answer -> fail message path
