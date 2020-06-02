@@ -22,11 +22,10 @@ class NLUWorker:
         self.tr = translation_api
 
     async def _detect_entities(self, text: str, http: ClientSession):
-        async with http:
-            async with http.post(self.GET_ENTITIES_URL, json={"text": text}) as resp:
-                data = await resp.json()
-                for each_entity in data['entities']:
-                    yield Entity(value=each_entity['value'], entity=each_entity['entity'])
+        async with http.post(self.GET_ENTITIES_URL, json={"text": text}) as resp:
+            data = await resp.json()
+            for each_entity in data['entities']:
+                yield Entity(value=each_entity['value'], entity=each_entity['entity'])
 
     async def detect_language(self, text: str) -> Optional[Union[Language, List[Language]]]:
         async with ClientSession() as http:
