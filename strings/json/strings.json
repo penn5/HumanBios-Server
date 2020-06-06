@@ -10,7 +10,7 @@
   "continue": "Continue",
   "try_again": "Try again",
   "checkback": "Hey, are you willing to take another quiz to track how your situation changed?",
-  "choose_lang": "Please choose the language you want to me to talk in to you from now on. You can enter:\n1) Language (native/name/code)\n2) Country (native/name/code)",
+  "choose_lang": "Please choose the language you want to me to talk in to you from now on. You can enter:\n1) Language (native/name/code)\n2) Country (native/name)\n3) Emoji (flag)",
   "choose_lang_country_based": "Your country seems to support several languages, please choose one.",
   "confirm_language": "We detected language: {}.\nAre you willing to continue?",
   "failed_language": "Sorry, I couldn't extract supported language from \"{}\".\nPlease try again.",

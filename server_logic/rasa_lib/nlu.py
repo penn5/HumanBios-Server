@@ -31,28 +31,25 @@ class NLUWorker:
         async with ClientSession() as http:
             # 1) Try to detect entity using rasa nlu
             async for each_entity in self._detect_entities(text, http):
-                if each_entity.entity in ['language_code', 'language_name']:
+                if each_entity.entity in ['language', 'country', 'country_flag']:
                     raw_language_obj = iso639.find(each_entity.value)
                     # False positive from rasa (maybe add some strings comparison later
-                    if raw_language_obj is None:
-                        continue
-                    logging.info(f"NLU model detected language: ({text})[{raw_language_obj['name']}]")
-                    return raw_language_obj
-                elif each_entity.entity in ['country_code', 'country_name']:
+                    if raw_language_obj and raw_language_obj['name'] != "Undetermined":
+                        logging.info(f"NLU model detected language: ({text})[{raw_language_obj['name']}]")
+                        return raw_language_obj
+                if each_entity.entity in ['country', 'country_flag']:
                     # Returned country name
                     # Our dict must have mapping to the country
                     langs = available_langs.get(each_entity.value)
-                    if langs is not None:
+                    if langs:
                         logging.info(f"NLU model detected country: ({text})[{each_entity.entity}]")
-                        return [iso639.find(lang) for lang in langs]
+                        langs = [iso639.find(lang) for lang in langs]
+                        return [lang_obj for lang_obj in langs if lang_obj and lang_obj['name'] != "Undetermined"]
             else:
                 # 2) Detect what is the language of the speaker
                 language = await self.tr.detect_language(text, http)
                 logging.info(f"Translator detected language: ({text})[{language}]")
                 # If user sent message in his own language and we figured out what is it - case closed
-                if language is not None:
-                    language = iso639.find(language)
-                else:
-                    language = None
-                # Will return None if not detected any
-                return language
+                language = iso639.find(language)
+                if language and language['name'] != "Undetermined":
+                   return language 

@@ -110,6 +110,7 @@ class Database:
             return user
 
     async def commit_user(self, user: User):
+        logging.info(user)
         self.Users.put_item(Item=user)
 
     # Conversations
