@@ -1,7 +1,6 @@
 from . import base_state
 from server_logic.definitions import Context
-from db_models import User
-from db_models.db import database
+from db import User
 
 ORDER = {
     1: "choose_lang", 2: "disclaimer", 3: "story", 4: "medical",
@@ -14,6 +13,7 @@ class BloggingState(base_state.BaseState):
     has_entry = False
 
     async def process(self, context: Context, user: User, db):
+
         if "blogging" not in user["context"]:
             user["context"]["blogging"] = "start"
             user["context"]["blogging_state"] = user["states"][-1]
@@ -53,5 +53,5 @@ class BloggingState(base_state.BaseState):
             del user["context"]["blogging"]
             text = self.strings["broadcast_message"].format(user["first_name"]) + user['answers']["story"]
             context["request"]["message"]["text"] = text
-            await database.create_broadcast(context)
+            self.create_task(db.create_broadcast, context)
             return base_state.GO_TO_STATE(user["context"]["blogging_state"])

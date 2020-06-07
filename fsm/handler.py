@@ -1,11 +1,10 @@
+from db import Database, User, BroadcastMessage, Session
 from datetime import timedelta, datetime
-from typing import List
-
 from settings import settings, tokens
-from db_models import database, User, BroadcastMessage, Session
-from db_models import ServiceTypes
-from db_models import CheckBack
 import fsm.states as states
+from db import ServiceTypes
+from db import CheckBack
+from typing import List
 import threading
 import asyncio
 import aiohttp
@@ -60,8 +59,11 @@ class BackgroundTasks(threading.Thread):
         loop.run_forever()
 
     async def all_tasks(self):
+        # Reminder loop
         asyncio.ensure_future(self.handler.reminder_loop())
+        # Broadcast messages loop
         asyncio.ensure_future(self.handler.broadcast_loop())
+        
 
 
 class Handler(object):
@@ -72,7 +74,7 @@ class Handler(object):
         self.__blogging_state = "BloggingState"
         self.__states = {}
         self.__register_states(*states.collect())
-        self.db = database
+        self.db = Database()
 
     def __register_state(self, state_class):
         self.__states[state_class.__name__] = state_class
@@ -150,7 +152,7 @@ class Handler(object):
                 user
             )
         # Call process method of some state
-        ret_code = await current_state.wrapped_process(context, user, self.db)
+        ret_code = await current_state.wrapped_process(context, user)
         await self.__handle_ret_code(context, user, ret_code)
 
     # get last state of the user
@@ -159,11 +161,13 @@ class Handler(object):
         # TELEGRAM SPECIAL CASES
         if context['request']['service_in'] == ServiceTypes.TELEGRAM:
             text = context['request']['message']['text']
-            if text and text.startswith("/start"):
-                context['request']['message']['text'] = text[6:].strip()
-                return self.__start_state
-            elif text and text.startswith("/postme"):
-                return self.__blogging_state
+            if isinstance(text, str) or hasattr(text, "value"):
+                text = str(text)
+                if text.startswith("/start"):
+                    context['request']['message']['text'] = text[6:].strip()
+                    return self.__start_state
+                if  text.startswith("/postme"):
+                    return self.__blogging_state
         # defaults to __start_state
         try:
             return user['states'][-1]
@@ -194,9 +198,9 @@ class Handler(object):
             user = await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
 
         if current_state.has_entry:
-            ret_code = await current_state.wrapped_entry(context, user, self.db)
+            ret_code = await current_state.wrapped_entry(context, user)
         else:
-            ret_code = await current_state.wrapped_process(context, user, self.db)
+            ret_code = await current_state.wrapped_process(context, user)
         await self.__handle_ret_code(context, user, ret_code)
 
     async def reminder_loop(self) -> None:
@@ -205,7 +209,7 @@ class Handler(object):
             while True:
                 now = self.db.now()
                 #next_circle = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-                next_circle = (now + timedelta(seconds=5)).replace(microsecond=0)
+                next_circle = (now + timedelta(seconds=10)).replace(microsecond=0)
                 await asyncio.sleep((next_circle - now).total_seconds())
                 await self.schedule_nearby_reminders(next_circle)
         except asyncio.CancelledError:
@@ -214,7 +218,8 @@ class Handler(object):
             logging.exception(f"Exception in reminder loop: {e}")
 
     async def schedule_nearby_reminders(self, now: datetime) -> None:
-        until = now + timedelta(minutes=1)
+        #until = now + timedelta(minutes=1)
+        until = now + timedelta(seconds=10)
         count, all_items_in_range = await self.db.all_checkbacks_in_range(now, until)
         # Send broadcast in the next minute, but not all at the same time
         send_at_list = [(60 / count) * i for i in range(count)]

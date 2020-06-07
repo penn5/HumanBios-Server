@@ -1,5 +1,5 @@
 from server_logic.definitions import Context
-from db_models import ServiceTypes, User
+from db import ServiceTypes, User
 from . import base_state
 
 
@@ -35,4 +35,4 @@ class StartState(base_state.BaseState):
                     user['files']['profile_picture'] = path
         # Edit context to not have file
         context['request']['has_file'] = False
-        return base_state.GO_TO_STATE("BasicQuestionState")
+        return base_state.GO_TO_STATE("LanguageDetectionState")

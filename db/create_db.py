@@ -226,4 +226,41 @@ def create_db(dynamodb):
             raise e
     statuses.append(status)
 
+    status = TableStatus('StringItems')
+    try:
+        table = dynamodb.create_table(
+            TableName='StringItems',
+            KeySchema=[
+                {
+                    'AttributeName': 'language',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'string_key',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'language',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'string_key',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 1,
+                'WriteCapacityUnits': 1
+            }
+        )
+        status.status = table.table_status
+    except ClientError as e:
+        if e.response['Error']['Code'] == "ResourceInUseException":
+            status.status = "ALREADY EXISTS"
+        else:
+            raise e
+    statuses.append(status)
+
     print("Table statuses:\n    ", '\n    '.join(str(x) for x in statuses))

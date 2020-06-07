@@ -31,3 +31,5 @@ test.py
 media/
 translated_strings/
 db-build/
+
+.gitmodules

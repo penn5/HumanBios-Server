@@ -1,6 +1,6 @@
 from server_logic.definitions import Context
 from strings.qa_module import get_next_question, get_user_scores, get_string, get_previous_question
-from db_models import ServiceTypes, User
+from db import ServiceTypes, User
 from datetime import timedelta
 from . import base_state
 import asyncio
@@ -28,12 +28,13 @@ class QAState(base_state.BaseState):
         curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'])
         # Alias for text answer
         raw_answer = context['request']['message']['text']
+        button = self.parse_button(raw_answer)
         # Save current score
         user['answers']['qa']['score'] = get_user_scores(user['identity'])
         # print(user['answers']['qa']['score'])
         # Handle edge buttons
         # If `stop` button -> kill dialog
-        if raw_answer == self.strings['stop']:
+        if button == 'stop':
             # Jump from current state to final `end` state
             return base_state.GO_TO_STATE("ENDState")
 
@@ -46,7 +47,7 @@ class QAState(base_state.BaseState):
                     raw_answer = answer
                     break
 
-        if raw_answer not in [self.strings['back']]:
+        if button not in ['back']:
             # @Important: `Not a legit answer` fallback
             # If question is not free AND answer is not in possible answers to the question
             if not curr_q.free and raw_answer not in curr_q.answers:
@@ -140,8 +141,7 @@ class QAState(base_state.BaseState):
             context['request']['has_buttons'] = True
             context['request']['buttons_type'] = "text"
             context['request']['buttons'] = [{"text": self.strings['yes']}, {"text": self.strings['no']}]
-            #await db.create_checkback(user, context, timedelta(days=1))
-            await db.create_checkback(user, context, timedelta(seconds=6))
+            self.create_task(db.create_checkback, user, context, timedelta(seconds=15))
             return base_state.GO_TO_STATE("BasicQuestionState")
         # If next question exists -> prepare data
         else:

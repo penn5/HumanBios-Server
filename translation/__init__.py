@@ -1,11 +1,13 @@
 from settings import CLOUD_TRANSLATION_API_KEY
 from aiohttp import ClientSession
+import logging
 import asyncio
 import ujson
 
 
 class Translator:
-    URL = f"https://translation.googleapis.com/language/translate/v2?key={CLOUD_TRANSLATION_API_KEY}"
+    TRANSLATION_URL = f"https://translation.googleapis.com/language/translate/v2?key={CLOUD_TRANSLATION_API_KEY}"
+    DETECTION_URL = f"https://translation.googleapis.com/language/translate/v2/detect?key={CLOUD_TRANSLATION_API_KEY}"
     HEADERS = {
         "Content-Type": "application/json; charset=utf-8",
     }
@@ -15,9 +17,29 @@ class Translator:
     def __init__(self):
         self.key = CLOUD_TRANSLATION_API_KEY
 
+    async def __get_json(self, url: str, data: dict, headers: dict, session: ClientSession):
+        if session:
+            async with session.post(url, json=data, headers=headers) as response:
+                return await response.json()
+        else:
+            async with ClientSession() as session:
+                async with session.post(url, json=data, headers=headers) as response:
+                    return await response.json()
+
+    async def detect_language(self,
+                              text: str,
+                              session: ClientSession = None):
+        data = {
+            'q': text
+        }
+        result = await self.__get_json(self.DETECTION_URL, data, self.HEADERS, session)
+        # Schema: [[{LANG}], ...], where LANG: {"language": "en"}
+        # logging.info(result)
+        return result['data']['detections'][0][0]["language"]
+
     async def translate_text(self,
-                             target: str,
                              text: str,
+                             target: str,
                              session: ClientSession = None,
                              from_lang: str = 'en'):
         data = {
@@ -26,20 +48,16 @@ class Translator:
             'format': 'text',
             'q': text
         }
-        if session:
-            async with session.post(self.URL, json=data, headers=self.HEADERS) as response:
-                result = await response.json()
-        else:
-            async with ClientSession() as session:
-                async with session.post(self.URL, json=data, headers=self.HEADERS) as response:
-                    result = await response.json()
+        # logging.info(data)
+        result = await self.__get_json(self.TRANSLATION_URL, data, self.HEADERS, session)
+        # logging.info(result)
         return result['data']['translations'][0]['translatedText']
 
     async def translate_dict(self, target: str, texts: dict, from_lang: str = 'en'):
         new_texts = dict()
         async with ClientSession() as session:
             for key, each_text in texts.items():
-                new_text: str = await self.translate_text(target, each_text, session)
+                new_text: str = await self.translate_text(each_text, target, session)
                 #:< Hacks
                 new_text = new_text.replace("& deg;", "°")
                 #

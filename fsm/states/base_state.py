@@ -1,12 +1,16 @@
-from server_logic.definitions import Context, SenderTask
+from server_logic.definitions import Context, SenderTask, ExecutionTask
+from strings import Strings, StringAccessor, TextPromise, Button
 from settings import tokens, ROOT_PATH
+from server_logic import NLUWorker
 from translation import Translator
 from aiohttp import ClientSession
-from strings import strings_text
-from db_models import User
+from typing import List, Optional
+from db import User, Database
 import aiofiles
 import asyncio
 import logging
+import copy
+import json
 import os
 
 
@@ -34,21 +38,24 @@ class GO_TO_STATE:
         return self.status == other.status
 
 
+class PromisesEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, TextPromise):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
+
 class BaseState(object):
     HEADERS = {
         "Content-Type": "application/json"
     }
     # This variable allows to ignore `entry()` when needed
     has_entry = True
-    # All translations
-    # TODO: Rework it so only cache and request new translation (from en) when needed
-    #       this will allow us to eventually use rasa for language recognition
-    #       with google language detection to provide the best language choice experience
-    __STRINGS = strings_text
-    # ALL languages
-    LANGUAGES = strings_text.keys()
-    # @Important: instantiate translator
-    TRANSLATOR = Translator()
+    # @Important: instantiate important classes
+    tr = Translator()
+    db = Database()
+    nlu = NLUWorker(tr)
+    STRINGS = Strings(tr, db)
     # Media path and folder
     media_folder = "media"
     media_path = os.path.join(ROOT_PATH, media_folder)
@@ -60,18 +67,11 @@ class BaseState(object):
     def __init__(self):
         # Keeps list of tasks
         self.tasks = list()
+        # Keeps execution queue
+        self.execution_queue = list()
         # Create language variable
-        self.__language = 'en'
-
-    @property
-    def strings(self):
-        """
-        This property simplifies the access to strings
-
-        Returns:
-            dict: strings of the user language
-        """
-        return self.__STRINGS[self.__language]
+        self.__language = None
+        self.strings = None
 
     def set_language(self, value: str):
         """
@@ -82,37 +82,48 @@ class BaseState(object):
             value (str): language code of the user's country
         """
         self.__language = value or "en"
+        self.strings = StringAccessor(self.__language, self.STRINGS)
 
-    async def wrapped_entry(self, context: Context, user: User, db):
-        # Prepare language for state
+    async def wrapped_entry(self, context: Context, user: User):
+        # Set language
         self.set_language(user['language'])
         # Execute state method
-        status = await self.entry(context, user, db)
+        status = await self.entry(context, user, self.db)
         # Commit changes to database
         if status.commit:
-            await db.commit_user(user=user)
-
+            await self.db.commit_user(user=user)
+        # @Important: Fulfill text promises
+        if self.strings.promises:
+            await self.strings.fill_promises()
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
         if self.tasks:
             # @Important: collect all requests
-            _results = await self.collect(user, context)
+            _results = await self.collect()
+        # @Important: Execute all queued jobs
+        if self.execution_queue:
+            await self.execute_tasks()
         return status
 
-    async def wrapped_process(self, context: Context, user: User, db):
-        # Prepare language for state
+    async def wrapped_process(self, context: Context, user: User):
+        # Set language
         self.set_language(user['language'])
         # Execute state method
-        status = await self.process(context, user, db)
+        status = await self.process(context, user, self.db)
         # Commit changes to database
         if status.commit:
-            await db.commit_user(user=user)
-
+            await self.db.commit_user(user=user)
+        # @Important: Fulfill text promises
+        if self.strings.promises:
+            await self.strings.fill_promises()
         # @Important: Since we call this always, check if
         # @Important: the call is actually needed
         if self.tasks:
             # @Important: collect all requests
-            _results = await self.collect(user, context)
+            await self.collect()
+        # @Important: Execute all queued jobs
+        if self.execution_queue:
+            await self.execute_tasks()
         return status
 
     # Actual state method to be written for the state
@@ -122,6 +133,16 @@ class BaseState(object):
     # Actual state method to be written for the state
     async def process(self, context: Context, user: User, db):
         return OK
+
+    def parse_button(self, raw_text: str) -> Button:
+        btn = Button(raw_text)
+        lang_obj = self.STRINGS.cache.get(self.__language)
+        if lang_obj is not None:
+            for key, value in lang_obj.items():
+                if value == raw_text:
+                    btn.set_key(key)
+                    break
+        return btn
 
     # @Important: 1) find better way with database
     # @Important: 2) What if we do it in non blocking asyncio.create_task (?)
@@ -154,15 +175,15 @@ class BaseState(object):
     # @Important: note, though, that we shouldn't abuse translation api
     # @Important: because a) it's not good enough, b) it takes time to make
     # @Important: a call to the google cloud api
-    async def translate(self, target: str, text: str) -> str:
-        return await self.TRANSLATOR.translate_text(target, text)
+    async def translate(self, text: str, target: str) -> str:
+        return await self.tr.translate_text(text, target)
 
     # Sugar
 
     # @Important: command to actually send all collected requests from `process` or `entry`
-    async def collect(self, user: User, context: Context):
+    async def collect(self):
         results = list()
-        async with ClientSession() as session:
+        async with ClientSession(json_serialize=lambda o: json.dumps(o, cls=PromisesEncoder)) as session:
             # @Important: Since asyncio.gather order is not preserved, we don't want to run them concurrently
             # tasks = [self._send(task, session) for task in self.tasks[id(context)]]
             # group = asyncio.gather(*tasks)
@@ -178,7 +199,10 @@ class BaseState(object):
         # Takes instance data holder object with the name from the tokens storage, extracts url
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
-        async with session.post(url, json=task.context.to_dict(), headers=self.HEADERS) as resp:
+        async with session.post(url,
+                                json=task.context['request'],
+                                headers=self.HEADERS
+                                ) as resp:
             # If reached server - log response
             if resp.status == 200:
                 pass  # [DEBUG]
@@ -190,7 +214,7 @@ class BaseState(object):
                 #    logging.info(f"Sending task status: No result")
             # Otherwise - log error
             else:
-                logging.error(f"[ERROR]: Sending task ({task}) status {await resp.text()}")
+                logging.error(f"[ERROR]: Sending task (user={task.user}, context={task.context['request']}) status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
@@ -200,4 +224,13 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
-        self.tasks.append(SenderTask(to_user, context.deepcopy()))
+        self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
+
+    async def execute_tasks(self):
+        results = await asyncio.gather(
+            *[exec_task.func(*exec_task.args, **exec_task.kwargs) for exec_task in self.execution_queue]
+        )
+        return results
+
+    def create_task(self, func, *args, **kwargs):
+        self.execution_queue.append(ExecutionTask(func, args, kwargs))

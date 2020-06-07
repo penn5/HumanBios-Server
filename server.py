@@ -4,7 +4,7 @@ from sanic.response import json
 from fsm.handler import Worker
 from settings import tokens
 from sanic import Sanic
-from db_models.db import database
+from db import Database
 #import googlemaps
 import secrets
 import sanic
@@ -14,6 +14,7 @@ import os
 app = Sanic(name="HumanBios-Server")
 handler = Worker()
 handler.start()
+database = Database()
 #gclient = googlemaps.Client(key=LOAD_KEY)
 
 
@@ -97,7 +98,8 @@ async def worker_setup(request):
     if not url:
         return json({"status": 403, "message": "url invalid"})
     # check if session is already saved, then this means the frontend was restarted and we can ignore this
-    # TODO: Support a changed key where the instance can say that it didnt restart, rather changed the other variables. Potentially its own endpoint
+    # TODO: Support a changed key where the instance can say that it didnt restart,
+    # TODO: rather changed the other variables. Potentially its own endpoint
     check = False
     # if its in the cache we take it from there
     for session_name in tokens:
