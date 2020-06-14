@@ -75,6 +75,17 @@
                         }
                     ],
                     "default": null
+                },
+                "lang_code": {
+                    "oneOf": [
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "default": null
                 }
             }
         },
