@@ -17,7 +17,7 @@ class LanguageDetectionState(base_state.BaseState):
                 self.set_language(lang['iso639_1'])
 
                 # Ask if user wants to continue with the language
-                context['request']['message']['text'] = self.strings["confirm_language"].format(lang['native'])
+                context['request']['message']['text'] = self.strings["app_confirm_language"].format(lang['native'])
                 context['request']['has_buttons'] = True
                 context['request']['buttons_type'] = "text"
                 context['request']['buttons'] = [
