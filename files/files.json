@@ -1,0 +1,9 @@
+{
+  "1": ["png/bad_sleep.min.png"],
+  "2": ["png/chest_cough.min.png"],
+  "3": ["png/chest_pain.min.png"],
+  "4": ["png/diarrhea.min.png"],
+  "5": ["png/headache.min.png"],
+  "6": ["png/pregnant.min.png"],
+  "7": ["png/sore_throat.min.png"]
+}
