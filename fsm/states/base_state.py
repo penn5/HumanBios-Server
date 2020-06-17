@@ -6,6 +6,7 @@ from translation import Translator
 from aiohttp import ClientSession
 from typing import List, Optional
 from db import User, Database
+from files import FILENAMES
 import aiofiles
 import asyncio
 import logging
@@ -56,6 +57,7 @@ class BaseState(object):
     db = Database()
     nlu = NLUWorker(tr)
     STRINGS = Strings(tr, db)
+    files = FILENAMES
     # Media path and folder
     media_folder = "media"
     media_path = os.path.join(ROOT_PATH, media_folder)
@@ -224,6 +226,13 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
+
+        # @Important: The easy way to add files from files.json
+        if isinstance(context['request']['message']['text'], TextPromise):
+            # Find according key for files from TextPromise
+            files = self.files.get(context['request']['message']['text'].key, list())
+            context['request']['file'].extend({"payload": file} for file in files)
+
         self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
 
     async def execute_tasks(self):
