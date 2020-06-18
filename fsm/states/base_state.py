@@ -201,6 +201,7 @@ class BaseState(object):
         # Takes instance data holder object with the name from the tokens storage, extracts url
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
+        logging.info(task.context['request']['file'])
         async with session.post(url,
                                 json=task.context['request'],
                                 headers=self.HEADERS
@@ -231,9 +232,18 @@ class BaseState(object):
         if isinstance(context['request']['message']['text'], TextPromise):
             # Find according key for files from TextPromise
             files = self.files.get(context['request']['message']['text'].key, list())
-            context['request']['file'].extend({"payload": file} for file in files)
+            #logging.info(files)
+            context['request']['file'] = [{"payload": _file} for _file in files]
             context['request']['has_file'] = bool(files)
+            context['request']['has_image'] = bool(files)
         self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
+
+    def add_files(self, context: Context, key: str):
+        files = self.files.get(key, list())
+        #logging.info(files)
+        context['request']['file'] = [{"payload": _file} for _file in files]
+        context['request']['has_file'] = bool(files)
+        context['request']['has_image'] = bool(files)
 
     async def execute_tasks(self):
         results = await asyncio.gather(

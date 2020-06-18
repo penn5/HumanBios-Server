@@ -1,6 +1,7 @@
 from .settings import CLOUD_TRANSLATION_API_KEY, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from .settings import SERVER_SECURITY_TOKEN
 from .settings import DATABASE_URL
+from .settings import STATIC_URL
 from .settings import ROOT_PATH
 from .settings import RASA_URL
 from .settings import N_CORES
