@@ -1,0 +1,14 @@
+humanbiosbots.com {
+    reverse_proxy humanbios-fb:8443
+}
+
+server.humanbiosbots.com {
+    handle /api/* {
+        reverse_proxy humanbios-server:8282
+    }
+    handle {
+        root * files
+        file_server
+    }
+
+}

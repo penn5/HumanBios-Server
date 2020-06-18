@@ -1,12 +1,35 @@
 from server_logic.definitions import Context
 from db import User
 from . import base_state
+import iso639
 import logging
 
 
 class LanguageDetectionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
+        # Special case for telegram-like client side language code entity
+        if context['request']['user']['lang_code']:
+            lang = iso639.find(context['request']['user']['lang_code'])
+            if lang and lang['name'] != "Undetermined":
+                # Update current context
+                user['language'] = lang['iso639_1']
+                self.set_language(lang['iso639_1'])
+
+                # Ask if user wants to continue with the language
+                context['request']['message']['text'] = self.strings["app_confirm_language"].format(lang['native'])
+                context['request']['has_buttons'] = True
+                context['request']['buttons_type'] = "text"
+                context['request']['buttons'] = [
+                    {"text": self.strings['yes']},
+                    {"text": self.strings['no']},
+                    {"text": self.strings['stop']}
+                ]
+
+                user['context']['language_state'] = 4
+                self.send(user, context)
+                return base_state.OK
+
         # Send language message
         context['request']['message']['text'] = self.strings["choose_lang"]
         # Set user context as 'Was Asked Language Question'
@@ -75,18 +98,26 @@ class LanguageDetectionState(base_state.BaseState):
             return base_state.OK
 
         elif user['context'].get('language_state') == 2:
+            print(button.key, raw_answer)
             if button == 'continue':
                 return base_state.GO_TO_STATE("BasicQuestionState")
             elif button == 'try_again':
                 failed = False
                 user['language'] = 'en'
                 self.set_language('en')
+
         elif user['context'].get('language_state') == 3:
             lang = user['context']['language_obj'].get(raw_answer)
             if lang is not None:
                 user['language'] = lang
                 return base_state.GO_TO_STATE("BasicQuestionState")
             elif button == 'try_again':
+                failed = False
+
+        elif user['context'].get('language_state') == 4:
+            if button == 'yes':
+                return base_state.GO_TO_STATE("BasicQuestionState")
+            elif button == 'no':
                 failed = False
 
         if failed:

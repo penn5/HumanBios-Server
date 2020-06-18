@@ -6,6 +6,7 @@ from translation import Translator
 from aiohttp import ClientSession
 from typing import List, Optional
 from db import User, Database
+from files import FILENAMES
 import aiofiles
 import asyncio
 import logging
@@ -56,6 +57,7 @@ class BaseState(object):
     db = Database()
     nlu = NLUWorker(tr)
     STRINGS = Strings(tr, db)
+    files = FILENAMES
     # Media path and folder
     media_folder = "media"
     media_path = os.path.join(ROOT_PATH, media_folder)
@@ -199,6 +201,7 @@ class BaseState(object):
         # Takes instance data holder object with the name from the tokens storage, extracts url
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
+        logging.info(task.context['request']['file'])
         async with session.post(url,
                                 json=task.context['request'],
                                 headers=self.HEADERS
@@ -224,7 +227,23 @@ class BaseState(object):
         # @Important: reasoning:
         # @Important:   simple way:   server -> request1 -> status1 -> request2 -> status2 -> request3 -> status3
         # @Important:     this way:   server -> gather(request1, request2, request3) -> log(status1, status2, status3)
+
+        # @Important: The easy way to add files from files.json
+        if isinstance(context['request']['message']['text'], TextPromise):
+            # Find according key for files from TextPromise
+            files = self.files.get(context['request']['message']['text'].key, list())
+            #logging.info(files)
+            context['request']['file'] = [{"payload": _file} for _file in files]
+            context['request']['has_file'] = bool(files)
+            context['request']['has_image'] = bool(files)
         self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
+
+    def add_files(self, context: Context, key: str):
+        files = self.files.get(key, list())
+        #logging.info(files)
+        context['request']['file'] = [{"payload": _file} for _file in files]
+        context['request']['has_file'] = bool(files)
+        context['request']['has_image'] = bool(files)
 
     async def execute_tasks(self):
         results = await asyncio.gather(

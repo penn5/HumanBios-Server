@@ -1,0 +1,13 @@
+{
+  "-1": ["jpeg/language.jpg"],
+  "-2": ["png/disclaimer.png"],
+  "-3": ["jpeg/note.jpg"],
+  "-4": ["jpeg/medical.jpg"],
+  "S4": ["png/bad_sleep.min.png"],
+  "S6": ["png/chest_cough.min.png"],
+  "SB": ["png/chest_pain.min.png"],
+  "S8": ["png/diarrhea.min.png"],
+  "SA": ["png/headache.min.png"],
+  "P6": ["png/pregnant.min.png"],
+  "S9": ["png/sore_throat.min.png"]
+}

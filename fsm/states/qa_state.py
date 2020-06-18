@@ -156,6 +156,8 @@ class QAState(base_state.BaseState):
     def set_data(self, context, question):
         # Set according text
         context['request']['message']['text'] = question.text
+        # Add files
+        self.add_files(context, question.id)
         # Sometimes questions have useful `note`
         if question.comment:
             context['request']['message']['text'] += f"\n\n{question.comment}"

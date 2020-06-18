@@ -54,7 +54,7 @@ async def data_handler(request):
     return json(ctx.ok)
 
 
-@app.route('/webhooks/rasa/webhook/get_facility', methods=['POST'])
+@app.route('/api/webhooks/rasa/webhook/get_facility', methods=['POST'])
 async def rasa_get_facility(request):
     # @Important: rasa sends location and facility type
     # @Important: we search in database -> Found: return relevant facility address.

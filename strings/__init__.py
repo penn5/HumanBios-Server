@@ -18,16 +18,16 @@ def load(*path):
 class StringAccessor:
     def __init__(self, lang: str, strings: "Strings"):
         self.lang = lang
-        self.promises: Set[TextPromise] = set()
+        self.promises: List[TextPromise] = list()
         self.strings = strings
 
     def __getitem__(self, key: str) -> TextPromise:
         promise = TextPromise(key)
-        self.promises.add(promise)
+        self.promises.append(promise)
         return promise
 
     async def fill_promises(self):
-        translations = await self.strings.get_translations(self.lang, set(prom.key for prom in self.promises))
+        translations = await self.strings.get_translations(self.lang, list(prom.key for prom in self.promises))
         for each_promise in self.promises:
             each_promise.fill(translations[each_promise.key])
 
