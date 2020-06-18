@@ -1,4 +1,8 @@
 {
+  "choose_lang": ["jpeg/language.jpg"],
+  "disclaimer": ["png/disclaimer.png"],
+  "story": ["jpeg/note.jpg"],
+  "medical": ["jpeg/medical.jpg"],
   "1": ["png/bad_sleep.min.png"],
   "2": ["png/chest_cough.min.png"],
   "3": ["png/chest_pain.min.png"],
