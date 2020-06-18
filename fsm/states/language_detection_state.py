@@ -98,6 +98,7 @@ class LanguageDetectionState(base_state.BaseState):
             return base_state.OK
 
         elif user['context'].get('language_state') == 2:
+            print(button.key, raw_answer)
             if button == 'continue':
                 return base_state.GO_TO_STATE("BasicQuestionState")
             elif button == 'try_again':

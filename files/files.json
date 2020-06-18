@@ -1,13 +1,13 @@
 {
-  "choose_lang": ["jpeg/language.jpg"],
+  "-1": ["jpeg/language.jpg"],
   "-2": ["png/disclaimer.png"],
   "-3": ["jpeg/note.jpg"],
   "-4": ["jpeg/medical.jpg"],
-  "q_S4_text": ["png/bad_sleep.min.png"],
-  "q_S6_text": ["png/chest_cough.min.png"],
-  "q_SB_text": ["png/chest_pain.min.png"],
-  "q_S8_text": ["png/diarrhea.min.png"],
-  "q_SA_text": ["png/headache.min.png"],
-  "q_P6_text": ["png/pregnant.min.png"],
-  "q_S9_text": ["png/sore_throat.min.png"]
+  "S4": ["png/bad_sleep.min.png"],
+  "S6": ["png/chest_cough.min.png"],
+  "SB": ["png/chest_pain.min.png"],
+  "S8": ["png/diarrhea.min.png"],
+  "SA": ["png/headache.min.png"],
+  "P6": ["png/pregnant.min.png"],
+  "S9": ["png/sore_throat.min.png"]
 }
