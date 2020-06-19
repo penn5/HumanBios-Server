@@ -38,7 +38,6 @@ class LanguageDetectionState(base_state.BaseState):
         self.send(user, context)
         return base_state.OK
 
-    # @Important: This state purposely resets whole dialog
     async def process(self, context: Context, user: User, db):
         raw_answer = context['request']['message']['text']
         failed = True
@@ -98,7 +97,6 @@ class LanguageDetectionState(base_state.BaseState):
             return base_state.OK
 
         elif user['context'].get('language_state') == 2:
-            print(button.key, raw_answer)
             if button == 'continue':
                 return base_state.GO_TO_STATE("BasicQuestionState")
             elif button == 'try_again':
