@@ -201,7 +201,6 @@ class BaseState(object):
         # Takes instance data holder object with the name from the tokens storage, extracts url
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
-        logging.info(task.context['request']['file'])
         async with session.post(url,
                                 json=task.context['request'],
                                 headers=self.HEADERS
