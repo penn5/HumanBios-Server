@@ -1,3 +1,4 @@
+from typing import Union, Text
 
 
 class Button:
@@ -38,14 +39,21 @@ class TextPromise:
         if self._format_data is not None:
             return self.value.format(self._format_data)
         if self._complex:
-            return "".join(str(item) for item in self._complex)
-        return self.value
+            return f"{self.value}{''.join(str(item) for item in self._complex)}"
+        return self.value or "TextPromise(Empty)"
 
-    def __add__(self, other: "TextPromise"):
-        if self.complex is None:
-            self._complex = [self, other]
+    def __add__(self, other: Union["TextPromise", Text]):
+        if self._complex is None:
+            self._complex = [other]
         else:
             self._complex.append(other)
+        return self
+
+    def __hash__(self):
+        if self.value is not None:
+            return hash(self.value)
+        else:
+            return hash(self.key)
 
     # Workaround to make promise to keep itself
     def __deepcopy__(self, memdict={}):

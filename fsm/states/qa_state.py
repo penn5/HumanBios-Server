@@ -4,6 +4,7 @@ from db import ServiceTypes, User
 from datetime import timedelta
 from . import base_state
 import asyncio
+import logging
 
 
 class QAState(base_state.BaseState):
@@ -115,21 +116,18 @@ class QAState(base_state.BaseState):
             if curr_q.free:
                 # Set next id to the only possible question
                 next_q_id = curr_q.answers
-            # if question is multi we can get the next answer
-            elif curr_q.multi:
-                next_q_id = curr_q.answers[get_string(user['language'], 'questionnaire_button_next')]
             # If answer in answers, map to the next question
             elif raw_answer in curr_q.answers:
                 # In this questions, answers are the `answer`:`next_question` maps
                 next_q_id = curr_q.answers[raw_answer]
         else:
-            next_q = get_previous_question(user['identity'], user['language'], curr_q.id)
+            next_q = get_previous_question(user['identity'], user['language'], curr_q.id, self.strings)
             if not next_q:
                 user['context']['bq_state'] = 4
                 return base_state.GO_TO_STATE("BasicQuestionState")
             next_q_id = next_q.id
         # Get next question via qa_module method
-        next_q = get_next_question(user['identity'], user['language'], next_q_id)
+        next_q = get_next_question(user['identity'], user['language'], next_q_id, self.strings)
         # If next question is a string, its the final recommendation. we will send it out then switch
         if isinstance(next_q, str):
             context['request']['message']['text'] = next_q
@@ -160,7 +158,8 @@ class QAState(base_state.BaseState):
         self.add_files(context, question.id)
         # Sometimes questions have useful `note`
         if question.comment:
-            context['request']['message']['text'] += f"\n\n{question.comment}"
+            context['request']['message']['text'] += "\n\n"
+            context['request']['message']['text'] += question.comment
 
         # Always have buttons
         context['request']['has_buttons'] = True

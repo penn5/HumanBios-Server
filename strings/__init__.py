@@ -8,6 +8,12 @@ import logging
 import json
 import os
 
+try:
+    from strings.qa_module.methods import get_english_strings
+except:
+    logging.exception("Couldn't load base for questions in qa_module (get_english_strings) ")
+    get_english_strings = lambda: dict()
+
 
 def load(*path):
     path = os.path.join(ROOT_PATH, *path)
@@ -34,6 +40,9 @@ class StringAccessor:
 
 class Strings:
     __strings = load('strings', 'json', 'strings.json')
+    # Update dict with values of QA-module
+    __strings.update(get_english_strings())
+
     original_strings = {}
     for each_key in __strings:
         original_strings[each_key] = {
