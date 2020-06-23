@@ -202,7 +202,7 @@ class BaseState(object):
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
         async with session.post(url,
-                                json=task.context['request'],
+                                json=task.context,
                                 headers=self.HEADERS
                                 ) as resp:
             # If reached server - log response
@@ -216,7 +216,7 @@ class BaseState(object):
                 #    logging.info(f"Sending task status: No result")
             # Otherwise - log error
             else:
-                logging.error(f"[ERROR]: Sending task (user={task.user}, context={task.context['request']}) status {await resp.text()}")
+                logging.error(f"[ERROR]: Sending task (user={task.user}, context={task.context}) status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
@@ -235,7 +235,8 @@ class BaseState(object):
             context['request']['file'] = [{"payload": _file} for _file in files]
             context['request']['has_file'] = bool(files)
             context['request']['has_image'] = bool(files)
-        self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
+            logging.info(context)
+        self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__['request'])))
 
     def add_files(self, context: Context, key: str):
         files = self.files.get(key, list())
@@ -243,6 +244,7 @@ class BaseState(object):
         context['request']['file'] = [{"payload": _file} for _file in files]
         context['request']['has_file'] = bool(files)
         context['request']['has_image'] = bool(files)
+        logging.info(context)
 
     async def execute_tasks(self):
         results = await asyncio.gather(
