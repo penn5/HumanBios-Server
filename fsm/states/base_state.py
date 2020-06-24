@@ -235,16 +235,9 @@ class BaseState(object):
             context['request']['file'] = [{"payload": _file} for _file in files]
             context['request']['has_file'] = bool(files)
             context['request']['has_image'] = bool(files)
-            logging.info(context)
+            if bool(files):
+                logging.info(context)
         self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__['request'])))
-
-    def add_files(self, context: Context, key: str):
-        files = self.files.get(key, list())
-        #logging.info(files)
-        context['request']['file'] = [{"payload": _file} for _file in files]
-        context['request']['has_file'] = bool(files)
-        context['request']['has_image'] = bool(files)
-        logging.info(context)
 
     async def execute_tasks(self):
         results = await asyncio.gather(
