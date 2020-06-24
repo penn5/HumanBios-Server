@@ -89,8 +89,15 @@ class BaseState(object):
     async def wrapped_entry(self, context: Context, user: User):
         # Set language
         self.set_language(user['language'])
-        # Execute state method
-        status = await self.entry(context, user, self.db)
+        # Wrap base method to avoid breaking server
+        try:
+            # Execute state method
+            status = await self.entry(context, user, self.db)
+        except Exception as e:
+            # Do not commit to database if something went wrong
+            status = OK(commit=False)
+            # Log exception
+            logging.exception(e)
         # Commit changes to database
         if status.commit:
             await self.db.commit_user(user=user)
@@ -110,8 +117,15 @@ class BaseState(object):
     async def wrapped_process(self, context: Context, user: User):
         # Set language
         self.set_language(user['language'])
-        # Execute state method
-        status = await self.process(context, user, self.db)
+        # Wrap base method to avoid breaking server
+        try:
+            # Execute state method
+            status = await self.process(context, user, self.db)
+        except Exception as e:
+            # Do not commit to database if something went wrong
+            status = OK(commit=False)
+            # Log exception
+            logging.exception(e)
         # Commit changes to database
         if status.commit:
             await self.db.commit_user(user=user)
