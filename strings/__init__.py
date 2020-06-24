@@ -29,11 +29,11 @@ class StringAccessor:
 
     def __getitem__(self, key: str) -> TextPromise:
         promise = TextPromise(key)
-        res = self.strings.get(key)
-        if res is None:
-            self.promises.append(promise)
-        else:
-            promise.fill(res)
+        #res = self.strings.get(key)
+        #if res is None:
+        self.promises.append(promise)
+        #else:
+        #    promise.fill(res)
         return promise
 
     async def fill_promises(self):

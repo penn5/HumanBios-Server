@@ -3,11 +3,11 @@
   "-2": ["png/disclaimer.png"],
   "-3": ["jpeg/note.jpg"],
   "-4": ["jpeg/medical.jpg"],
-  "S4": ["jpeg/bad_sleep.jpg"],
-  "S6": ["jpeg/chest_cough.jpg"],
-  "SB": ["jpeg/chest_pain.jpg"],
-  "S8": ["jpeg/diarrhea.jpg"],
-  "SA": ["jpeg/headache.jpg"],
-  "P6": ["jpeg/pregnant.jpg"],
-  "S9": ["jpeg/sore_throat.jpg"]
+  "q_S4_text": ["jpeg/bad_sleep.jpg"],
+  "q_S6_text": ["jpeg/chest_cough.jpg"],
+  "q_SB_text": ["jpeg/chest_pain.jpg"],
+  "q_S8_text": ["jpeg/diarrhea.jpg"],
+  "q_SA_text": ["jpeg/headache.jpg"],
+  "q_P6_text": ["jpeg/pregnant.jpg"],
+  "q_S9_text": ["jpeg/sore_throat.jpg"]
 }
