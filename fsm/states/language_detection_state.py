@@ -8,8 +8,9 @@ import logging
 class LanguageDetectionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
+        user['context']['bq_state'] = 1
         # Special case for telegram-like client side language code entity
-        if context['request']['user']['lang_code']:
+        if user['context'].get('language_state') is None and context['request']['user']['lang_code']:
             lang = iso639.find(context['request']['user']['lang_code'])
             if lang and lang['name'] != "Undetermined":
                 # Update current context
@@ -28,7 +29,11 @@ class LanguageDetectionState(base_state.BaseState):
 
                 user['context']['language_state'] = 4
                 self.send(user, context)
+                # [DEBUG]
+                # logging.info(f"{user['context']['language_state']}, {user['language']}")
                 return base_state.OK
+            # [DEBUG]
+            # logging.info(f"{lang}, {context['request']['user']['lang_code']}")
 
         # Send language message
         context['request']['message']['text'] = self.strings["choose_lang"]
@@ -42,6 +47,8 @@ class LanguageDetectionState(base_state.BaseState):
         raw_answer = context['request']['message']['text']
         failed = True
         button = self.parse_button(raw_answer)
+        # [DEBUG]
+        # logging.info(f"Button key: {button.key}")
 
         if button == 'stop':
             # Jump from current state to final `end` state
@@ -114,6 +121,8 @@ class LanguageDetectionState(base_state.BaseState):
 
         elif user['context'].get('language_state') == 4:
             if button == 'yes':
+                # [DEBUG]
+                logging.info("Returing to the Basic Question State.")
                 return base_state.GO_TO_STATE("BasicQuestionState")
             elif button == 'no':
                 failed = False

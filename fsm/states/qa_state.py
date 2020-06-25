@@ -2,15 +2,17 @@ from server_logic.definitions import Context
 from strings.qa_module import get_next_question, get_user_scores, get_string, get_previous_question
 from db import ServiceTypes, User
 from datetime import timedelta
+from strings.items import TextPromise
 from . import base_state
 import asyncio
+import logging
 
 
 class QAState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
         # Get the first question
-        question = get_next_question(user['identity'], user['language'])
+        question = get_next_question(user['identity'], user['language'], custom_obj=self.strings)
         # Create qa storage
         user['answers']['qa'] = {
             'q': question.id,
@@ -25,10 +27,13 @@ class QAState(base_state.BaseState):
 
     async def process(self, context: Context, user: User, db):
         # Get saved current question
-        curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'])
+        curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'], custom_obj=self.strings)
         # Alias for text answer
         raw_answer = context['request']['message']['text']
         button = self.parse_button(raw_answer)
+        # [DEBUG]
+        # logging.info(button)
+        # logging.info(curr_q.answers)
         # Save current score
         user['answers']['qa']['score'] = get_user_scores(user['identity'])
         # print(user['answers']['qa']['score'])
@@ -42,15 +47,19 @@ class QAState(base_state.BaseState):
         if context['request']['service_in'] == ServiceTypes.FACEBOOK:
             # For each answer, check if truncated answer is the beginning of real answer
             for answer in curr_q.answers:
-                if answer[:20] == raw_answer[:20]:
+                if answer.text[:20] == raw_answer[:20]:
                     # Set predicted answer value to the text alias
-                    raw_answer = answer
+                    raw_answer = answer.text
                     break
+            button = self.parse_button(raw_answer)
 
         if button not in ['back']:
             # @Important: `Not a legit answer` fallback
             # If question is not free AND answer is not in possible answers to the question
-            if not curr_q.free and raw_answer not in curr_q.answers:
+            # [DEBUG]
+            # logging.info(button)
+            # logging.info(curr_q.answers)
+            if not curr_q.free and button not in curr_q.answers:
                 # Send invalid answer text
                 context['request']['message']['text'] = self.strings['invalid_answer']
                 context['request']['has_buttons'] = False
@@ -64,8 +73,9 @@ class QAState(base_state.BaseState):
             if curr_q.multi:
                 # @Important: if the answer is next, it means the user skipped answering or
                 # submitted answers. Anyway, we want the next question
-                next_button = get_string(user['language'], 'questionnaire_button_next')
-                if raw_answer == next_button:
+                next_button = get_string(user['language'], 'questionnaire_button_next', custom_obj=self.strings)
+                # Compare class Button to the TextPromise, need to extract key from latter to decrease complexity of classes
+                if button == next_button.key:
                     if curr_q.id in user['answers']['qa']['qa_results']:
                         # we override this so we dont have to change the code later
                         raw_answer = user['answers']['qa']['qa_results'][curr_q.id]
@@ -115,23 +125,20 @@ class QAState(base_state.BaseState):
             if curr_q.free:
                 # Set next id to the only possible question
                 next_q_id = curr_q.answers
-            # if question is multi we can get the next answer
-            elif curr_q.multi:
-                next_q_id = curr_q.answers[get_string(user['language'], 'questionnaire_button_next')]
             # If answer in answers, map to the next question
-            elif raw_answer in curr_q.answers:
+            elif button in curr_q.answers:
                 # In this questions, answers are the `answer`:`next_question` maps
-                next_q_id = curr_q.answers[raw_answer]
+                next_q_id = curr_q.answers[button]
         else:
-            next_q = get_previous_question(user['identity'], user['language'], curr_q.id)
+            next_q = get_previous_question(user['identity'], user['language'], curr_q.id, self.strings)
             if not next_q:
                 user['context']['bq_state'] = 4
                 return base_state.GO_TO_STATE("BasicQuestionState")
             next_q_id = next_q.id
         # Get next question via qa_module method
-        next_q = get_next_question(user['identity'], user['language'], next_q_id)
+        next_q = get_next_question(user['identity'], user['language'], next_q_id, self.strings)
         # If next question is a string, its the final recommendation. we will send it out then switch
-        if isinstance(next_q, str):
+        if isinstance(next_q, TextPromise):
             context['request']['message']['text'] = next_q
             context['request']['has_buttons'] = False
             self.send(user, context)
@@ -156,11 +163,10 @@ class QAState(base_state.BaseState):
     def set_data(self, context, question):
         # Set according text
         context['request']['message']['text'] = question.text
-        # Add files
-        self.add_files(context, question.id)
         # Sometimes questions have useful `note`
         if question.comment:
-            context['request']['message']['text'] += f"\n\n{question.comment}"
+            context['request']['message']['text'] += "\n\n"
+            context['request']['message']['text'] += question.comment
 
         # Always have buttons
         context['request']['has_buttons'] = True

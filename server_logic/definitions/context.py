@@ -77,11 +77,7 @@ class Context(Serializable):
         self['request']['security_token'] = tokens['server']
 
     def to_dict(self):
-        data = dict()
-        # Send without 'request' key wrapper
-        for key, value in self.__dict__['request'].items():
-            data[key] = value
-        return data
+        return self.__dict__['request']
 
     def copy(self):
         return copy(self)

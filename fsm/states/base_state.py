@@ -89,8 +89,15 @@ class BaseState(object):
     async def wrapped_entry(self, context: Context, user: User):
         # Set language
         self.set_language(user['language'])
-        # Execute state method
-        status = await self.entry(context, user, self.db)
+        # Wrap base method to avoid breaking server
+        try:
+            # Execute state method
+            status = await self.entry(context, user, self.db)
+        except Exception as e:
+            # Do not commit to database if something went wrong
+            status = OK(commit=False)
+            # Log exception
+            logging.exception(e)
         # Commit changes to database
         if status.commit:
             await self.db.commit_user(user=user)
@@ -110,8 +117,15 @@ class BaseState(object):
     async def wrapped_process(self, context: Context, user: User):
         # Set language
         self.set_language(user['language'])
-        # Execute state method
-        status = await self.process(context, user, self.db)
+        # Wrap base method to avoid breaking server
+        try:
+            # Execute state method
+            status = await self.process(context, user, self.db)
+        except Exception as e:
+            # Do not commit to database if something went wrong
+            status = OK(commit=False)
+            # Log exception
+            logging.exception(e)
         # Commit changes to database
         if status.commit:
             await self.db.commit_user(user=user)
@@ -202,7 +216,7 @@ class BaseState(object):
         url = tokens[task.user['via_instance']].url
         # Unpack context, set headers (content-type: json)
         async with session.post(url,
-                                json=task.context['request'],
+                                json=task.context,
                                 headers=self.HEADERS
                                 ) as resp:
             # If reached server - log response
@@ -216,7 +230,7 @@ class BaseState(object):
                 #    logging.info(f"Sending task status: No result")
             # Otherwise - log error
             else:
-                logging.error(f"[ERROR]: Sending task (user={task.user}, context={task.context['request']}) status {await resp.text()}")
+                logging.error(f"[ERROR]: Sending task (user={task.user}, context={task.context}) status {await resp.text()}")
 
     # @Important: `send` METHOD THAT ALLOWS TO SEND PAYLOAD TO THE USER
     def send(self, to_user: User, context: Context):
@@ -235,14 +249,12 @@ class BaseState(object):
             context['request']['file'] = [{"payload": _file} for _file in files]
             context['request']['has_file'] = bool(files)
             context['request']['has_image'] = bool(files)
-        self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__)))
-
-    def add_files(self, context: Context, key: str):
-        files = self.files.get(key, list())
-        #logging.info(files)
-        context['request']['file'] = [{"payload": _file} for _file in files]
-        context['request']['has_file'] = bool(files)
-        context['request']['has_image'] = bool(files)
+            # [DEBUG]
+            # logging.info(context['request']['message']['text'].key)
+        else:
+            # [DEBUG]
+            pass  # logging.info(context['request']['message']['text'])
+        self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__['request'])))
 
     async def execute_tasks(self):
         results = await asyncio.gather(

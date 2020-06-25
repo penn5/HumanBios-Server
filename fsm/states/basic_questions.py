@@ -1,6 +1,7 @@
 from server_logic.definitions import Context
 from . import base_state
 from db import User
+import logging
 
 # TODO: Hardcoded order is bad (?), find a way to order everything
 # TODO: in json file, much like covapp, so we will be able to change
@@ -18,6 +19,8 @@ ORDER = {
 class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
+        # [DEBUG]
+        # logging.info(user['context'])
         # If returning to the state from somewhere, with current_state -> continue
         if user['context'].get("bq_state") == 10:
             # Send location message
