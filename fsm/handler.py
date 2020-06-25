@@ -144,13 +144,8 @@ class Handler(object):
         # Looking for state, creating state object
         correct_state, current_state, current_state_name = self.__get_state(last_state)
         if not correct_state:
-            # Registering new last state
-            user = await self.db.update_user(
-                user['identity'],
-                "SET states = list_append(states, :i)",
-                {":i": [current_state_name]},
-                user
-            )
+            user['states'].append(current_state_name)
+            await self.db.commit_user(user)
         # Call process method of some state
         ret_code = await current_state.wrapped_process(context, user)
         await self.__handle_ret_code(context, user, ret_code)
@@ -187,15 +182,11 @@ class Handler(object):
         last_state = await self.last_state(user, context)
         correct_state, current_state, current_state_name = self.__get_state(next_state)
         # Registering new last state
-        user = await self.db.update_user(
-            user['identity'],
-            "SET states = list_append(states, :i)",
-            {":i":  [current_state_name]},
-            user
-        )
+        user['states'].append(current_state_name)
+        await self.db.commit_user(user)
         # Check if history is too long
         if len(user['states']) > self.STATES_HISTORY_LENGTH:
-            user = await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
+            await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
 
         if current_state.has_entry:
             ret_code = await current_state.wrapped_entry(context, user)

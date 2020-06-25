@@ -95,19 +95,24 @@ class Database:
             return response['Item']
 
     async def update_user(self, identity: str, expression: str, values: Optional[dict], user: User = None) -> Optional[User]:
-        response = self.Users.update_item(
-            Key={
-                'identity': identity
-            },
-            UpdateExpression=expression,
-            ExpressionAttributeValues=values,
-            ReturnValues="UPDATED_NEW"
-        )
-        if user is not None:
+        try:
+            response = self.Users.update_item(
+                Key={
+                    'identity': identity
+                },
+                UpdateExpression=expression,
+                ExpressionAttributeValues=values,
+                ReturnValues="UPDATED_NEW"
+            )
+        except Exception as e:
+            logging.exception(e)
+            logging.info(user)
+            response = None
+
+        if user and response:
             # This is.. uh (since database returns only new value, not full object)
             for key, new_value in response['Attributes'].items():
                 user[key] = new_value  # ignore warning
-            return user
 
     async def commit_user(self, user: User):
         # [DEBUG] logging.info(user)
