@@ -30,7 +30,11 @@ class QAState(base_state.BaseState):
         curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'], custom_obj=self.strings)
         # Alias for text answer
         raw_answer = context['request']['message']['text']
-        button = self.parse_button(raw_answer)
+        
+        button = self.parse_button(
+            raw_answer, 
+            truncated = context['request']['service_in'] == ServiceTypes.FACEBOOK
+        )
         # [DEBUG]
         # logging.info(button)
         # logging.info(curr_q.answers)
@@ -42,17 +46,7 @@ class QAState(base_state.BaseState):
         if button == 'stop':
             # Jump from current state to final `end` state
             return base_state.GO_TO_STATE("ENDState")
-
-        # Important: hack, has to be used to treat truncated answers from facebook
-        if context['request']['service_in'] == ServiceTypes.FACEBOOK:
-            # For each answer, check if truncated answer is the beginning of real answer
-            for answer in curr_q.answers:
-                if answer.text[:20] == raw_answer[:20]:
-                    # Set predicted answer value to the text alias
-                    raw_answer = answer.text
-                    break
-            button = self.parse_button(raw_answer)
-
+        
         if button not in ['back']:
             # @Important: `Not a legit answer` fallback
             # If question is not free AND answer is not in possible answers to the question
