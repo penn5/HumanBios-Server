@@ -249,9 +249,11 @@ class BaseState(object):
             context['request']['file'] = [{"payload": _file} for _file in files]
             context['request']['has_file'] = bool(files)
             context['request']['has_image'] = bool(files)
-            logging.info(context['request']['message']['text'].key)
+            # [DEBUG]
+            # logging.info(context['request']['message']['text'].key)
         else:
-            logging.info(context['request']['message']['text'])
+            # [DEBUG]
+            pass  # logging.info(context['request']['message']['text'])
         self.tasks.append(SenderTask(to_user, copy.deepcopy(context.__dict__['request'])))
 
     async def execute_tasks(self):

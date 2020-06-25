@@ -10,4 +10,4 @@ with open(os.path.join(ROOT_PATH, "files", "files.json")) as filenames:
 for key, paths in FILENAMES.items():
     FILENAMES[key] = [f"{STATIC_URL}/{path}" for path in paths]
 
-logging.info(f"Loaded files: {FILENAMES}")
+logging.info(f"Loaded files: {json.dumps(FILENAMES, indent=4)}")

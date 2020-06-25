@@ -30,10 +30,10 @@ class LanguageDetectionState(base_state.BaseState):
                 user['context']['language_state'] = 4
                 self.send(user, context)
                 # [DEBUG]
-                logging.info(f"{user['context']['language_state']}, {user['language']}")
+                # logging.info(f"{user['context']['language_state']}, {user['language']}")
                 return base_state.OK
             # [DEBUG]
-            logging.info(f"{lang}, {context['request']['user']['lang_code']}")
+            # logging.info(f"{lang}, {context['request']['user']['lang_code']}")
 
         # Send language message
         context['request']['message']['text'] = self.strings["choose_lang"]
@@ -48,7 +48,7 @@ class LanguageDetectionState(base_state.BaseState):
         failed = True
         button = self.parse_button(raw_answer)
         # [DEBUG]
-        logging.info(f"Button key: {button.key}")
+        # logging.info(f"Button key: {button.key}")
 
         if button == 'stop':
             # Jump from current state to final `end` state

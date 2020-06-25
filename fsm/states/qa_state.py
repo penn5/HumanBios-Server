@@ -11,7 +11,7 @@ class QAState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
         # Get the first question
-        question = get_next_question(user['identity'], user['language'])
+        question = get_next_question(user['identity'], user['language'], custom_obj=self.strings)
         # Create qa storage
         user['answers']['qa'] = {
             'q': question.id,
@@ -26,7 +26,7 @@ class QAState(base_state.BaseState):
 
     async def process(self, context: Context, user: User, db):
         # Get saved current question
-        curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'])
+        curr_q = get_next_question(user['identity'], user['language'], user['answers']['qa']['q'], custom_obj=self.strings)
         # Alias for text answer
         raw_answer = context['request']['message']['text']
         button = self.parse_button(raw_answer)
@@ -47,6 +47,7 @@ class QAState(base_state.BaseState):
                     # Set predicted answer value to the text alias
                     raw_answer = answer
                     break
+            button = self.parse_button(raw_answer)
 
         if button not in ['back']:
             # @Important: `Not a legit answer` fallback
@@ -65,7 +66,7 @@ class QAState(base_state.BaseState):
             if curr_q.multi:
                 # @Important: if the answer is next, it means the user skipped answering or
                 # submitted answers. Anyway, we want the next question
-                next_button = get_string(user['language'], 'questionnaire_button_next')
+                next_button = get_string(user['language'], 'questionnaire_button_next', custom_obj=self.strings)
                 if raw_answer == next_button:
                     if curr_q.id in user['answers']['qa']['qa_results']:
                         # we override this so we dont have to change the code later
