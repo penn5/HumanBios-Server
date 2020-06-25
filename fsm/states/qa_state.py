@@ -2,6 +2,7 @@ from server_logic.definitions import Context
 from strings.qa_module import get_next_question, get_user_scores, get_string, get_previous_question
 from db import ServiceTypes, User
 from datetime import timedelta
+from strings.items import TextPromise
 from . import base_state
 import asyncio
 import logging
@@ -73,7 +74,8 @@ class QAState(base_state.BaseState):
                 # @Important: if the answer is next, it means the user skipped answering or
                 # submitted answers. Anyway, we want the next question
                 next_button = get_string(user['language'], 'questionnaire_button_next', custom_obj=self.strings)
-                if button == next_button:
+                # Compare class Button to the TextPromise, need to extract key from latter to decrease complexity of classes
+                if button == next_button.key:
                     if curr_q.id in user['answers']['qa']['qa_results']:
                         # we override this so we dont have to change the code later
                         raw_answer = user['answers']['qa']['qa_results'][curr_q.id]
@@ -136,7 +138,7 @@ class QAState(base_state.BaseState):
         # Get next question via qa_module method
         next_q = get_next_question(user['identity'], user['language'], next_q_id, self.strings)
         # If next question is a string, its the final recommendation. we will send it out then switch
-        if isinstance(next_q, str):
+        if isinstance(next_q, TextPromise):
             context['request']['message']['text'] = next_q
             context['request']['has_buttons'] = False
             self.send(user, context)
