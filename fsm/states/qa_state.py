@@ -30,6 +30,9 @@ class QAState(base_state.BaseState):
         # Alias for text answer
         raw_answer = context['request']['message']['text']
         button = self.parse_button(raw_answer)
+        # [DEBUG]
+        # logging.info(button)
+        # logging.info(curr_q.answers)
         # Save current score
         user['answers']['qa']['score'] = get_user_scores(user['identity'])
         # print(user['answers']['qa']['score'])
@@ -43,16 +46,19 @@ class QAState(base_state.BaseState):
         if context['request']['service_in'] == ServiceTypes.FACEBOOK:
             # For each answer, check if truncated answer is the beginning of real answer
             for answer in curr_q.answers:
-                if answer[:20] == raw_answer[:20]:
+                if answer.text[:20] == raw_answer[:20]:
                     # Set predicted answer value to the text alias
-                    raw_answer = answer
+                    raw_answer = answer.text
                     break
             button = self.parse_button(raw_answer)
 
         if button not in ['back']:
             # @Important: `Not a legit answer` fallback
             # If question is not free AND answer is not in possible answers to the question
-            if not curr_q.free and raw_answer not in curr_q.answers:
+            # [DEBUG]
+            # logging.info(button)
+            # logging.info(curr_q.answers)
+            if not curr_q.free and button not in curr_q.answers:
                 # Send invalid answer text
                 context['request']['message']['text'] = self.strings['invalid_answer']
                 context['request']['has_buttons'] = False
@@ -67,7 +73,7 @@ class QAState(base_state.BaseState):
                 # @Important: if the answer is next, it means the user skipped answering or
                 # submitted answers. Anyway, we want the next question
                 next_button = get_string(user['language'], 'questionnaire_button_next', custom_obj=self.strings)
-                if raw_answer == next_button:
+                if button == next_button:
                     if curr_q.id in user['answers']['qa']['qa_results']:
                         # we override this so we dont have to change the code later
                         raw_answer = user['answers']['qa']['qa_results'][curr_q.id]
@@ -118,9 +124,9 @@ class QAState(base_state.BaseState):
                 # Set next id to the only possible question
                 next_q_id = curr_q.answers
             # If answer in answers, map to the next question
-            elif raw_answer in curr_q.answers:
+            elif button in curr_q.answers:
                 # In this questions, answers are the `answer`:`next_question` maps
-                next_q_id = curr_q.answers[raw_answer]
+                next_q_id = curr_q.answers[button]
         else:
             next_q = get_previous_question(user['identity'], user['language'], curr_q.id, self.strings)
             if not next_q:

@@ -10,8 +10,6 @@ class Button:
         self.key = key
 
     def __eq__(self, other: str):
-        if self.key is None:
-            return False
         return self.key == other
 
     def __bool__(self):
@@ -19,6 +17,9 @@ class Button:
 
     def __repr__(self):
         return f"Button(key={self.key})"
+
+    def __hash__(self):
+        return hash(self.key)
 
 
 class TextPromise:
@@ -40,7 +41,10 @@ class TextPromise:
             return self.value.format(self._format_data)
         if self._complex:
             return f"{self.value}{''.join(str(item) for item in self._complex)}"
-        return self.value or "TextPromise(Empty)"
+        return self.value or f"EmptyTextPromise(key={self.key})"
+
+    def __repr__(self):
+        return str(self)
 
     def __add__(self, other: Union["TextPromise", Text]):
         if self._complex is None:
@@ -49,11 +53,11 @@ class TextPromise:
             self._complex.append(other)
         return self
 
+    def __eq__(self, other):
+        return self.key == other.key
+
     def __hash__(self):
-        if self.value is not None:
-            return hash(self.value)
-        else:
-            return hash(self.key)
+        return hash(self.key)
 
     # Workaround to make promise to keep itself
     def __deepcopy__(self, memdict={}):

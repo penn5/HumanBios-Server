@@ -26,7 +26,7 @@ logdir = os.path.join(ROOT_PATH, 'log')
 logfile = os.path.join(logdir, 'server.log')
 if not os.path.exists(logdir):
     os.mkdir(logdir)
-formatter = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+formatter = '%(asctime)s - %(filename)s - %(levelname)s - %(message)s'
 date_format = '%d-%b-%y %H:%M:%S'
 
 logging.basicConfig(
