@@ -17,6 +17,7 @@ class QAState(base_state.BaseState):
         user['answers']['qa'] = {
             'q': question.id,
             'qa_results': {},
+            'qa_keys': [],
             'score': 0
         }
         # Easy method to prepare context for question
@@ -102,9 +103,11 @@ class QAState(base_state.BaseState):
                     # storing the answers in a string, separated with a ,
                     else:
                         user['answers']['qa']['qa_results'][curr_q.id] += f", {raw_answer}"
+                    # make sure to store checked keys
+                    user['answers']['qa']['qa_keys'].append(button.key)
                     # we have to rebuild the keyboard cause new answer
                     keyboard = [{"text": answer} for answer in curr_q.answers if
-                                answer not in user['answers']['qa']['qa_results'][curr_q.id]]
+                                answer.key not in user['answers']['qa']['qa_keys']]
                     keyboard += [{"text": self.strings['stop']}]
                     context['request']['message']['text'] = self.strings['qa_multi'].format(next_button)
                     context['request']['has_buttons'] = True
