@@ -1,7 +1,23 @@
 from typing import TypedDict, List, Dict, Union, Set, Iterable
+from strings.qa_module.setup import questions
+# modify questions (BLOAT)
+to_modify = {
+    "answer_yes": "yes",
+    "answer_no": "no"
+}
+for question in questions.values():
+    answers = question.get("answers")
+    if answers is not None:
+        items = [(key, answers[key]) for key in answers]
+        for key, value in items:
+            new_key = to_modify.get(key)
+            if new_key is not None:
+                del answers[key]
+                answers[new_key] = value
+
+from .items import TextPromise, Button
 from translation import Translator
 from settings import ROOT_PATH
-from .items import TextPromise, Button
 import asyncio
 import hashlib
 import logging
@@ -29,11 +45,11 @@ class StringAccessor:
 
     def __getitem__(self, key: str) -> TextPromise:
         promise = TextPromise(key)
-        #res = self.strings.get(key)
-        #if res is None:
-        self.promises.append(promise)
-        #else:
-        #    promise.fill(res)
+        res = self.strings.get(key)
+        if res is None:
+            self.promises.append(promise)
+        else:
+            promise.fill(res)
         return promise
 
     async def fill_promises(self):

@@ -150,14 +150,23 @@ class BaseState(object):
     async def process(self, context: Context, user: User, db):
         return OK
 
-    def parse_button(self, raw_text: str) -> Button:
+    def parse_button(self, raw_text: str, truncated=False) -> Button:
         btn = Button(raw_text)
         lang_obj = self.STRINGS.cache.get(self.__language)
         if lang_obj is not None:
-            for key, value in lang_obj.items():
-                if value == raw_text:
-                    btn.set_key(key)
-                    break
+            if not truncated:
+                for key, value in lang_obj.items():
+                    if value == raw_text:
+                        btn.set_key(key)
+                        break
+            else:
+                for key, value in lang_obj.items():
+                    if len(value) > 20 and value[:20] == raw_text[:20]:
+                        btn.set_key(key)
+                        break
+                    elif value == raw_text:
+                        btn.set_key(key)
+                        break
         return btn
 
     # @Important: 1) find better way with database

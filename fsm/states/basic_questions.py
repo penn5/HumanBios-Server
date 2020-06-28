@@ -20,7 +20,7 @@ class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
         # [DEBUG]
-        logging.info(user['context'])
+        # logging.info(user['context'])
         # If returning to the state from somewhere, with current_state -> continue
         if user['context'].get("bq_state") == 10:
             # Send location message
