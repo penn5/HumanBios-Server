@@ -25,6 +25,12 @@ class Worker(threading.Thread):
         self.q.put(ctx)
 
     async def _run_processes(self):
+        # # # Background tasks # # #
+        # Reminder loop
+        asyncio.ensure_future(self.handler.reminder_loop())
+        # Broadcast messages loop
+        asyncio.ensure_future(self.handler.broadcast_loop())
+
         while True:
             try:
                 ctx = self.q.get(timeout=self.timeout)
@@ -34,36 +40,11 @@ class Worker(threading.Thread):
             except Exception as e:
                 logging.exception(e)
 
-    def run(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        loop = asyncio.get_event_loop()
-        # Background tasks thread
-        BackgroundTasks(self.handler).start()
-
-        loop.run_until_complete(self._run_processes())
-
     async def idle(self):
-        await asyncio.sleep(self.timeout)
-
-
-class BackgroundTasks(threading.Thread):
-    def __init__(self, handler: "Handler"):
-        self.handler = handler
-        super(BackgroundTasks, self).__init__()
+        await asyncio.sleep(0)
 
     def run(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        loop = asyncio.get_event_loop()
-        # All tasks that should run
-        asyncio.ensure_future(self.all_tasks())
-        loop.run_forever()
-
-    async def all_tasks(self):
-        # Reminder loop
-        asyncio.ensure_future(self.handler.reminder_loop())
-        # Broadcast messages loop
-        asyncio.ensure_future(self.handler.broadcast_loop())
-        
+        asyncio.run(self._run_processes())
 
 
 class Handler(object):
@@ -153,16 +134,14 @@ class Handler(object):
     # get last state of the user
     async def last_state(self, user: User, context):
         # special cases #
-        # TELEGRAM SPECIAL CASES
-        if context['request']['service_in'] == ServiceTypes.TELEGRAM:
-            text = context['request']['message']['text']
-            if isinstance(text, str) or hasattr(text, "value"):
-                text = str(text)
-                if text.startswith("/start"):
-                    context['request']['message']['text'] = text[6:].strip()
-                    return self.__start_state
-                if  text.startswith("/postme"):
-                    return self.__blogging_state
+        text = context['request']['message']['text']
+        if isinstance(text, str) or hasattr(text, "value"):
+            text = str(text)
+            if text.startswith("/start"):
+                context['request']['message']['text'] = text[6:].strip()
+                return self.__start_state
+            if  text.startswith("/postme"):
+                return self.__blogging_state
         # defaults to __start_state
         try:
             return user['states'][-1]

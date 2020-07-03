@@ -40,7 +40,10 @@
                     "oneOf": [
                         {
                             "type": "number"
-                        }
+                        },
+			{
+			    "type": "string"
+			}
                     ]
                 },
                 "first_name": {
@@ -100,7 +103,10 @@
                     "oneOf": [
                         {
                             "type": "number"
-                        }
+                        },
+			{
+			    "type": "string"
+			}
                     ]
                 },
                 "name": {
