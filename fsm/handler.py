@@ -134,16 +134,14 @@ class Handler(object):
     # get last state of the user
     async def last_state(self, user: User, context):
         # special cases #
-        # TELEGRAM SPECIAL CASES
-        if context['request']['service_in'] == ServiceTypes.TELEGRAM:
-            text = context['request']['message']['text']
-            if isinstance(text, str) or hasattr(text, "value"):
-                text = str(text)
-                if text.startswith("/start"):
-                    context['request']['message']['text'] = text[6:].strip()
-                    return self.__start_state
-                if  text.startswith("/postme"):
-                    return self.__blogging_state
+        text = context['request']['message']['text']
+        if isinstance(text, str) or hasattr(text, "value"):
+            text = str(text)
+            if text.startswith("/start"):
+                context['request']['message']['text'] = text[6:].strip()
+                return self.__start_state
+            if  text.startswith("/postme"):
+                return self.__blogging_state
         # defaults to __start_state
         try:
             return user['states'][-1]
