@@ -69,7 +69,7 @@ class BasicQuestionState(base_state.BaseState):
         key = ORDER.get(user['context']['bq_state'])
         # Raw text alias
         raw_text: str = context['request']['message']['text']
-        button = self.parse_button(raw_text)        
+        button = self.parse_button(raw_text)
 
         # Dialog steps that require non-trivial/free input
         free_answers = ["story", "location", "selfie", "coughing"]
@@ -158,7 +158,7 @@ class BasicQuestionState(base_state.BaseState):
             # Add one to the state, so state will jump as we want (change in order will break it)
             bonus_value = 1
         # if not stressed -> good day
-        elif key == "mental" and button == 'no':
+        elif key == "stressed" and button == 'no':
             context['request']['message']['text'] = self.strings["reach_out"]
             context['request']['buttons'] = []
             context['request']['has_buttons'] = False
