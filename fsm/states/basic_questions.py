@@ -11,8 +11,8 @@ import logging
 # @Important: DONT CHANGE, IF CHANGED -> review all the code below AND in other states
 ORDER = {
     1: "choose_lang", 2: "disclaimer", 3: "story", 4: "medical",
-    5: "QA_TRIGGER", 6: "stressed", 7: "mental", 8: "wanna_help",
-    9: "helping", 10: "location", 11: "selfie", 12: "coughing"
+    5: "QA_TRIGGER", 6: "stressed", 7: "mental",
+    8: "location", 9: "selfie", 10: "coughing"
 }
 
 
@@ -72,7 +72,7 @@ class BasicQuestionState(base_state.BaseState):
         button = self.parse_button(raw_text)        
 
         # Dialog steps that require non-trivial/free input
-        free_answers = ["story", "helping", "location", "selfie", "coughing"]
+        free_answers = ["story", "location", "selfie", "coughing"]
         # If choose language (first) state
         if key == "choose_lang":
             return base_state.GO_TO_STATE("LanguageDetectionState")
@@ -140,7 +140,7 @@ class BasicQuestionState(base_state.BaseState):
         # Bonus value to skip one state
         bonus_value = 0
         # Denied disclaimer (or end of conv)
-        if (key == "disclaimer" or key == "wanna_help") and button == 'reject':
+        if key == "disclaimer" and button == 'reject':
             context['request']['message']['text'] = self.strings["bye"]
             context['request']['buttons'] = []
             context['request']['has_buttons'] = False
@@ -157,9 +157,13 @@ class BasicQuestionState(base_state.BaseState):
         elif key == "medical" and button == 'no':
             # Add one to the state, so state will jump as we want (change in order will break it)
             bonus_value = 1
-        # if not stressed -> jump to `wanna_help`
-        elif key == "stressed" and button == 'no':
-            bonus_value = 1
+        # if not stressed -> good day
+        elif key == "mental" and button == 'no':
+            context['request']['message']['text'] = self.strings["reach_out"]
+            context['request']['buttons'] = []
+            context['request']['has_buttons'] = False
+            self.send(user, context)
+            return base_state.GO_TO_STATE("AFKState")
         # @Important: create social request
         elif key == "mental" and button == 'yes':
             #donotrepeatyourcode
@@ -167,9 +171,6 @@ class BasicQuestionState(base_state.BaseState):
         # @Important: if coughing (last state) -> request doctor conversation
         elif key == "coughing":
             return self.request_method(context, user, db.types.MEDIC, "forward_doctor")
-        elif key == "helping" and button == 'yes':
-            # TODO: Is not implemented yet
-            return base_state.GO_TO_STATE("AFKState")
 
         # Back button
         if button == 'back':
