@@ -126,7 +126,8 @@ class Handler(object):
         correct_state, current_state, current_state_name = self.__get_state(last_state)
         if not correct_state:
             user['states'].append(current_state_name)
-            await self.db.commit_user(user)
+            # @Important: maybe we don't need to commit, since we will commit after?
+            # await self.db.commit_user(user)
         # Call process method of some state
         ret_code = await current_state.wrapped_process(context, user)
         await self.__handle_ret_code(context, user, ret_code)
@@ -140,7 +141,7 @@ class Handler(object):
             if text.startswith("/start"):
                 context['request']['message']['text'] = text[6:].strip()
                 return self.__start_state
-            if  text.startswith("/postme"):
+            if text.startswith("/postme"):
                 return self.__blogging_state
         # defaults to __start_state
         try:
@@ -162,11 +163,13 @@ class Handler(object):
         correct_state, current_state, current_state_name = self.__get_state(next_state)
         # Registering new last state
         user['states'].append(current_state_name)
-        await self.db.commit_user(user)
+        # @Important: maybe we don't need to commit, since we will commit after?
+        # await self.db.commit_user(user)
         # Check if history is too long
         if len(user['states']) > self.STATES_HISTORY_LENGTH:
-            await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
-
+            # @Important: maybe we don't need to update, since we will commit after?
+            # await self.db.update_user(user['identity'], "REMOVE states[0]", None, user)
+            user['states'].pop(0)
         if current_state.has_entry:
             ret_code = await current_state.wrapped_entry(context, user)
         else:
