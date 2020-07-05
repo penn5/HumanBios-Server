@@ -19,10 +19,12 @@ ORDER = {
 class BasicQuestionState(base_state.BaseState):
 
     async def entry(self, context: Context, user: User, db):
+        # Take key associated with state
+        key = ORDER.get(user['context']['bq_state'])
         # [DEBUG]
         # logging.info(user['context'])
         # If returning to the state from somewhere, with current_state -> continue
-        if user['context'].get("bq_state") == 10:
+        if key == "location":
             # Send location message
             context['request']['message']['text'] = self.strings["location"]
             context['request']['has_buttons'] = True
@@ -36,7 +38,7 @@ class BasicQuestionState(base_state.BaseState):
             self.send(user, context)
             return base_state.OK
             # If returning to the state from somewhere, with current_state -> continue
-        elif user['context'].get("bq_state") == 4:
+        elif key == "medical":
             # Send medical message
             context['request']['message']['text'] = self.strings["medical"]
             context['request']['has_buttons'] = True
@@ -44,7 +46,7 @@ class BasicQuestionState(base_state.BaseState):
             # Don't forget to add task
             self.send(user, context)
             return base_state.OK
-        elif user['context'].get("bq_state") == 1:
+        elif key == "choose_lang":
             # Send disclaimer message
             context['request']['message']['text'] = self.strings["disclaimer"]
             context['request']['has_buttons'] = True
