@@ -34,7 +34,7 @@ class QAState(base_state.BaseState):
         
         button = self.parse_button(
             raw_answer, 
-            truncated = context['request']['service_in'] == ServiceTypes.FACEBOOK
+            truncated=context['request']['service_in'] == ServiceTypes.FACEBOOK
         )
         # [DEBUG]
         # logging.info(button)
@@ -69,8 +69,9 @@ class QAState(base_state.BaseState):
                 # @Important: if the answer is next, it means the user skipped answering or
                 # submitted answers. Anyway, we want the next question
                 next_button = get_string(user['language'], 'questionnaire_button_next', custom_obj=self.strings)
-                # Compare class Button to the TextPromise, need to extract key from latter to decrease complexity of classes
-                if button == next_button.key:
+                # Compare class Button to the TextPromise, need to extract key from
+                # latter to decrease complexity of classes
+                if button == next_button.key:  # ignore
                     if curr_q.id in user['answers']['qa']['qa_results']:
                         # we override this so we dont have to change the code later
                         raw_answer = user['answers']['qa']['qa_results'][curr_q.id]
@@ -139,7 +140,7 @@ class QAState(base_state.BaseState):
             context['request']['message']['text'] = next_q
             context['request']['has_buttons'] = False
             self.send(user, context)
-            user['context']['bq_state'] = 10
+            user['context']['bq_state'] = 8
             # Create checkback task (in 60 seconds now)
             context['request']['message']['text'] = self.strings['checkback']
             context['request']['has_buttons'] = True
